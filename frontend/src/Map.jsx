@@ -1,14 +1,38 @@
 import { useState } from "react";
+import "leaflet/dist/leaflet.css";
+import "leaflet-draw/dist/leaflet.draw.css";
+import "leaflet-draw";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  useMap,
+} from "react-leaflet";
 import axios from "axios";
+import L from "leaflet";
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "/marker-icon-2x.png",
+  iconUrl: "/marker-icon.png",
+  shadowUrl: "/marker-shadow.png",
+});
+
+function RecenterMap({coords}){
+  const map = useMap();
+  if(coords){
+    map.setView(coords,13);
+  }
+  return null;
+}
+
 function Map() {
   let [locationInfo, setLocationInfo] = useState({
     country: "",
     city: "",
   });
-  let [coords, setCoords] = useState({
-    lat: "",
-    lng: "",
-  });
+  let [coords, setCoords] = useState(null);
 
   const getCoordinates = async (address) => {
     try {
@@ -81,6 +105,26 @@ function Map() {
         />
         <button>Get map</button>
       </form>
+
+      {coords && (
+        <MapContainer
+          center={coords}
+          zoom={5}
+          style={{ height: "500px", width: "100%", borderRadius: "12px" }}
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          <RecenterMap coords={coords}></RecenterMap>
+        
+          <Marker position={coords}>
+             <Popup>
+               You are here!
+             </Popup>
+          </Marker>
+        </MapContainer>
+      )}
     </div>
   );
 }
