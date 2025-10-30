@@ -1,6 +1,10 @@
 import { useState } from "react";
+import L from "leaflet";
+import "@geoman-io/leaflet-geoman-free";
+import "@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css";
+
 import "leaflet/dist/leaflet.css";
-import "leaflet-draw/dist/leaflet.draw.css";
+
 import "leaflet-draw";
 import {
   MapContainer,
@@ -10,7 +14,7 @@ import {
   useMap,
 } from "react-leaflet";
 import axios from "axios";
-import L from "leaflet";
+import DrawControl from "./DrawControl";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -33,7 +37,9 @@ function Map() {
     city: "",
   });
   let [coords, setCoords] = useState(null);
-
+  const handleRectangleDrawn = (bounds)=>{
+    console.log("Selected area : ", bounds);
+  }
   const getCoordinates = async (address) => {
     try {
       const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
@@ -123,6 +129,7 @@ function Map() {
                You are here!
              </Popup>
           </Marker>
+          <DrawControl onRectangleDrawn={handleRectangleDrawn}></DrawControl>
         </MapContainer>
       )}
     </div>
