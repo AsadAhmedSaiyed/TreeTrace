@@ -20,6 +20,8 @@
     "express": "^5.1.0",
     "google-auth-library": "^10.5.0",
     "install": "^0.13.0",
+    "mongodb": "^7.0.0",
+    "mongoose": "^9.0.1",
     "npm": "^11.6.2"
   }
 }

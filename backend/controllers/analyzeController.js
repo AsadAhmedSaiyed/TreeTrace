@@ -21,6 +21,7 @@ const calcEVI = (img) => {
       B2: img.select("B2"), // Blue (for atmospheric correction)
     }
   );
+  console.log("Finding EVI");
   return EVI.rename("EVI");
 };
 
@@ -28,11 +29,13 @@ const calcEVI = (img) => {
 const calcNDMI = (img) => {
   // Uses Shortwave Infrared (SWIR1) to detect water content in plant tissue.
   // Formula: (NIR - SWIR1) / (NIR + SWIR1)
+  console.log("Finding NDMI");
   return img.normalizedDifference(["B8", "B11"]).rename("NDMI");
 };
 
 // 3. Normalized Difference Built-up Index (NDBI) - Bare Ground/Built-up
 const calcNDBI = (img) => {
+  console.log("Finding NDBI");
   // Uses the inverse of NDMI to highlight non-vegetated surfaces.
   // Formula: (SWIR1 - NIR) / (SWIR1 + NIR)
   return img.normalizedDifference(["B11", "B8"]).rename("NDBI");
@@ -40,6 +43,7 @@ const calcNDBI = (img) => {
 
 // 4. Normalized Burn Ratio (NBR) - Fire/Structural Change
 const calcNBR = (img) => {
+  console.log("Finding NBR");
   // Highly sensitive to moisture loss and ash/charcoal content after a burn.
   // Formula: (NIR - SWIR2) / (NIR + SWIR2)
   return img.normalizedDifference(["B8A", "B12"]).rename("NBR");
@@ -109,19 +113,29 @@ async function initGEE() {
 }
 
 // --- 2. Improved Cloud Masking ---
+// --- 2. Improved Cloud Masking (Using SCL Band) ---
 function maskS2clouds(image) {
-  const qa = image.select("QA60");
-  const cloudBitMask = 1 << 10;
-  const cirrusBitMask = 1 << 11;
-  const mask = qa
-    .bitwiseAnd(cloudBitMask)
-    .eq(0)
-    .and(qa.bitwiseAnd(cirrusBitMask).eq(0));
+  const scl = image.select('SCL');
+
+  // SCL Classes Table:
+  // 0: No Data, 1: Saturated / Defective
+  // 2: Dark Area Pixels
+  // 3: Cloud Shadows
+  // 4: Vegetation, 5: Not Vegetated, 6: Water, 7: Unclassified
+  // 8: Cloud Medium Probability, 9: Cloud High Probability
+  // 10: Thin Cirrus, 11: Snow
+
+  // We want to KEEP: 4 (Veg), 5 (Bare Soil), 6 (Water), 7 (Unclassified), 2 (Dark/Terrain), 11 (Snow)
+  // We want to REMOVE: 1, 3 (Shadows), 8 (Clouds), 9 (Clouds), 10 (Cirrus)
+  
+  // Select classes to MASK (Keep only clear land/water)
+  // Masking 3 (Shadows), 8, 9, 10 (Clouds)
+  const mask = scl.neq(3).and(scl.neq(8)).and(scl.neq(9)).and(scl.neq(10));
 
   return image
     .updateMask(mask)
-    .divide(10000)
-    .select(["B2", "B3", "B4", "B8", "B8A", "B11","B12"]) // Added B11/B8A for future index use
+    .divide(10000) // Scale to 0-1
+    .select(["B2", "B3", "B4", "B8", "B8A", "B11", "B12"])
     .copyProperties(image, ["system:time_start"]);
 }
 
@@ -156,6 +170,7 @@ const getHistoricalStats = async (geometry, dates) => {
     .clip(geometry)
     .rename("sigma");
 
+    console.log("getting historical data!");
   // 4. Extract the regional mean statistics (as simple JavaScript numbers)
   // We get the average value of 'mu' and 'sigma' across the whole geometry.
   const [muStats, sigmaStats] = await Promise.all([
@@ -184,7 +199,7 @@ const calculateAreaMetrics = (
 ) => {
   // 1. Loss Condition: Delta Index (e.g., EVI) must be strongly negative (e.g., < -0.15)
   const indexLoss = deltaIndex.lt(lossThreshold);
-
+  console.log("Calculating area loss");
   // 2. Statistical Condition: Z-Score must be highly unusual (e.g., < -2.0)
   const zScoreLoss = ZScoreImage.lt(zScoreThreshold);
 
@@ -264,7 +279,7 @@ export const analyze = async (req, res) => {
         details: fetchErr.message,
       });
     }
-
+   console.log("retrieved images");
     // Case 2: Calculation (Now safe because images are guaranteed to exist)
     const calcNDVI = (img) =>
       img.normalizedDifference(["B8", "B4"]).rename("NDVI");
@@ -327,7 +342,7 @@ export const analyze = async (req, res) => {
       -0.15,
       -2.0
     );
-
+    console.log("getting data");
     // Case 3: Processing & URL Generation
     const [
       beforeUrl,
@@ -368,22 +383,13 @@ export const analyze = async (req, res) => {
       getRegionStats(areaLossKm2Image, geometry, ee.Reducer.sum(), 20), // Sums the area
     ]);
 
+    console.log("sending response");
+
     // Success Response
     res.json({
       success: true,
       data: {
-        before_image: beforeUrl,
-        after_image: afterUrl,
-        ndvi_diff_image: diffUrl,
-        mean_ndvi_change: stats.NDVI_Change,
-        mean_evi_change: statsEVI.Delta_EVI,
-        mean_ndmi_change: statsNDMI.Delta_NDMI,
-        mean_ndbi_change: statsNDBI.Delta_NDBI,
-        mean_nbr_change: statsNBR.Delta_NBR,
-        mean_z_score: statsZScore.ZScore,
-        historical_baseline_mu: historical.mu,
-        historical_variability_sigma: historical.sigma,
-        area_of_loss_km2: statsAreaLoss.Area_Loss_km2,
+        
       },
     });
   } catch (err) {
