@@ -87,6 +87,10 @@ const ReportSchema = new Schema({
     type: Number,
     required: true,
   },
+  summary:{
+    type:String,
+    default: "Pending"
+  },
 },{
     timestamps: true,
 });

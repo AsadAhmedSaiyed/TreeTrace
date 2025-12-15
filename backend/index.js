@@ -1,23 +1,19 @@
 import express from "express";
 import dotenv from "dotenv";
+import mongoose from "mongoose";
 import { analyze } from "./controllers/analyzeController.js";
-import qs from "querystring"
-import openeoRoute from "./routes/openeoRoutes.js";
 dotenv.config();
 import cors from "cors";
-
+const url = process.env.MONGO_URI;
 const app = express();
 const PORT = process.env.PORT || 5000;
-import vegetationRoutes from "./routes/vegetation.js";
 import ee from "@google/earthengine";
 import fs from "fs";
+import ReportModel from "./models/ReportModel.js";
 dotenv.config();
 const keyFile = process.env.GEE_KEY_PATH;
 console.log("keyFile : ", keyFile);
 let initialized = false;
-const api_key = process.env.SPECTATOR_API_KEY;
-const bbox = "19.59,49.90,20.33,50.21";
-const url = `https://api.spectator.earth/imagery/?bbox=${bbox}&api_key=${api_key}`;
 
 async function initGEE() {
   if (!initialized) {
@@ -52,78 +48,40 @@ app.use(
   })
 );
 app.use(express.json());
-// app.use("/api/openeo", openeoRoute);
-// app.use("/api/vegetation",vegetationRoutes);
-app.post("/analyze", analyze);
-app.get("/getToken",async (req,res) => {
-    const body = qs.stringify({
-      client_id: process.env.CLIENT_ID,
-      client_secret: process.env.CLIENT_SECRET,
-      grant_type: "client_credentials",
+app.post("/report/:id", async (req, res) => {
+  try {
+    let { id } = req.params;
+    const report = await ReportModel.findById(id).lean();
+    if (!report) {
+      return res.status(404).json({
+        message: "Report Not found!",
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      report,
     });
-  const result = await fetch("https://services.sentinel-hub.com/oauth/token", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body
-  });
-  const data = await result.json();
-  console.log(data);
-  return res.json({token: data.access_token});
-}
-);
-app.get("/getImg", async (req, res) => {
-    console.log("Called!");
-  const response = await fetch("https://services.sentinel-hub.com/api/v1/process", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.TOKEN}`,
-    },
-    body: JSON.stringify({
-      input: {
-        bounds: {
-          bbox: [
-            13.822174072265625, 45.85080395917834, 14.55963134765625,
-            46.29191774991382,
-          ],
-        },
-        data: [
-          {
-            type: "sentinel-2-l2a",
-          },
-        ],
-      },
-      evalscript: `
-    //VERSION=3
-
-    function setup() {
-      return {
-        input: ["B02", "B03", "B04"],
-        output: {
-          bands: 3
-        }
-      };
-    }
-
-    function evaluatePixel(
-      sample,
-      scenes,
-      inputMetadata,
-      customData,
-      outputMetadata
-    ) {
-      return [2.5 * sample.B04, 2.5 * sample.B03, 2.5 * sample.B02];
-    }
-    `,
-    }),
-  });
-  
-  console.log(response);
-  const buffer = Buffer.from(await response.arrayBuffer());
-  res.setHeader("Content-Type", "image/png");
-  res.send(buffer);
+  } catch (e) {
+    console.error("Error while fetching report : ", e.message);
+    return res.status(500).json({
+      message: "Server error while fetching report!",
+    });
+  }
 });
+app.post("/analyze", analyze);
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Connect to MongoDB and start server
+async function connectToDb() {
+  try {
+    await mongoose.connect(url);
+    console.log("MongoDB connected");
+
+    app.listen(PORT, () => {
+      console.log(`App started on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error("Connection failed!", err);
+  }
+}
+
+connectToDb();

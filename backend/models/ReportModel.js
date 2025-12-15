@@ -1,5 +1,5 @@
-import mongoose, { mongo } from "mongoose";
-import ReportSchema from "../schemas/ReportSchema";
+import mongoose from "mongoose";
+import ReportSchema from "../schemas/ReportSchema.js";
 
 const ReportModel = mongoose.model("Report",ReportSchema);
 
