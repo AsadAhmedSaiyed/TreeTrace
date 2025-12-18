@@ -1,10 +1,11 @@
 import { tool, generateText } from "ai";
 import { z } from "zod";
-import getSummary from "./getSummary";
+import sendEmail from "./sendEmail";
+import generateEmailContent from "./generateEmailContent";
 
-const getSummaryTool = tool({
+const emailAgentTool = tool({
   description:
-    "Generates a MAANG-level executive summary for an environmental report and assesses tree loss.",
+    "Orchestrates drafting and sending professional NGO email alerts.",
   // Inside your getSummaryTool definition:
   inputSchema: z.object({
     reportData: z
@@ -57,10 +58,28 @@ const getSummaryTool = tool({
           .describe(
             "Calculated area of tree/vegetation loss in square kilometers."
           ),
+         summary:z.string().describe("Report summary.")    
       })
       .describe("The complete, structured data from the environmental report."),
+    ngoEmail: z.string().describe("The recipient NGO email address."),
+    action: z.enum(["DRAFT_ONLY", "SEND_ALERT"]).describe("Whether to just draft or draft and send.")
   }),
-  execute: getSummary
+  execute: async ({reportData,ngoEmail,action})=>{
+    const emailContent = await generateEmailContent({reportData});
+    if (action === "DRAFT_ONLY") {
+      return { status: "DRAFTED", ...emailContent };
+    }
+    try{
+       await sendEmail({
+        email:ngoEmail,
+        subject :emailContent.subject,
+        body:emailContent.body 
+       });
+       return { status: "SENT", message: `Alert successfully sent to ${ngoEmail}` };
+    }catch(e){
+      return {status : "Error" , message:e.message};
+    }
+  },
 });
 
-export default getSummaryTool;
+export default emailAgentTool;
