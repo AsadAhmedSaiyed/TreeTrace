@@ -1,11 +1,10 @@
 import ee from "@google/earthengine";
-import fs from "fs";
+import { saveToCloudinary } from "../utils/uploadUtil.js";
 import dotenv from "dotenv";
+import ReportModel from "../models/ReportModel.js";
 
 dotenv.config();
-const keyFile = process.env.GEE_KEY_PATH;
 
-let initialized = false;
 
 // --- Core Index Calculation Functions ---
 
@@ -19,7 +18,7 @@ const calcEVI = (img) => {
       B8: img.select("B8"), // Near-Infrared (NIR)
       B4: img.select("B4"), // Red
       B2: img.select("B2"), // Blue (for atmospheric correction)
-    }
+    },
   );
   console.log("Finding EVI");
   return EVI.rename("EVI");
@@ -88,34 +87,10 @@ const getRegionStats = (image, geometry, reducer, scale) => {
   });
 };
 
-async function initGEE() {
-  if (!initialized) {
-    const privateKeyData = JSON.parse(fs.readFileSync(keyFile, "utf8"));
-    await new Promise((resolve, reject) => {
-      ee.data.authenticateViaPrivateKey(
-        privateKeyData,
-        () => {
-          ee.initialize(
-            null,
-            null,
-            () => {
-              initialized = true;
-              console.log("GEE initialized");
-              resolve();
-            },
-            reject
-          );
-        },
-        reject
-      );
-    });
-  }
-}
-
 // --- 2. Improved Cloud Masking ---
 // --- 2. Improved Cloud Masking (Using SCL Band) ---
 function maskS2clouds(image) {
-  const scl = image.select('SCL');
+  const scl = image.select("SCL");
 
   // SCL Classes Table:
   // 0: No Data, 1: Saturated / Defective
@@ -127,7 +102,7 @@ function maskS2clouds(image) {
 
   // We want to KEEP: 4 (Veg), 5 (Bare Soil), 6 (Water), 7 (Unclassified), 2 (Dark/Terrain), 11 (Snow)
   // We want to REMOVE: 1, 3 (Shadows), 8 (Clouds), 9 (Clouds), 10 (Cirrus)
-  
+
   // Select classes to MASK (Keep only clear land/water)
   // Masking 3 (Shadows), 8, 9, 10 (Clouds)
   const mask = scl.neq(3).and(scl.neq(8)).and(scl.neq(9)).and(scl.neq(10));
@@ -147,9 +122,8 @@ const getHistoricalStats = async (geometry, dates) => {
   const startYear = endYear - 5; // Start 5 years prior (e.g., 2020)
 
   // Use the .get('month') to retrieve the month number (1-12)
-    const startMonthNum = beforeDate.get("month").getInfo(); // Get the month number as a JS value
+  const startMonthNum = beforeDate.get("month").getInfo(); // Get the month number as a JS value
 
- 
   // 2. Filter the historical satellite collection (Sentinel-2)
   const historicalCollection = ee
     .ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
@@ -170,12 +144,12 @@ const getHistoricalStats = async (geometry, dates) => {
     .clip(geometry)
     .rename("sigma");
 
-    console.log("getting historical data!");
+  console.log("getting historical data!");
   // 4. Extract the regional mean statistics (as simple JavaScript numbers)
   // We get the average value of 'mu' and 'sigma' across the whole geometry.
   const [muStats, sigmaStats] = await Promise.all([
-    getRegionStats(muImage, geometry, ee.Reducer.mean(), 50),
-    getRegionStats(sigmaImage, geometry, ee.Reducer.mean(), 50),
+    getRegionStats(muImage, geometry, ee.Reducer.mean(), 100),
+    getRegionStats(sigmaImage, geometry, ee.Reducer.mean(), 100),
   ]);
 
   // 5. Return the image objects (for Z-Score) and the scalar values (for the report)
@@ -195,7 +169,7 @@ const calculateAreaMetrics = (
   ZScoreImage,
   geometry,
   lossThreshold,
-  zScoreThreshold
+  zScoreThreshold,
 ) => {
   // 1. Loss Condition: Delta Index (e.g., EVI) must be strongly negative (e.g., < -0.15)
   const indexLoss = deltaIndex.lt(lossThreshold);
@@ -208,25 +182,23 @@ const calculateAreaMetrics = (
 
   // 4. Calculate Area (in km^2) only for the masked pixels
   const pixelArea = ee.Image.pixelArea().mask(lossMask);
-  const areaKm2 = pixelArea.divide(1e6).rename("Area_Loss_km2");
+  const aream2 = pixelArea.rename("Area_Loss_m2");
 
-  return areaKm2;
+  return aream2;
 };
 
 // --- 3. Main Logic ---
 
 export const analyze = async (req, res) => {
   try {
-    const { bounds, dates } = req.body;
-
+    const { bounds, dates,locationName } = req.body;
+    console.log(locationName);
     // Case 0: Input Validation
     if (!bounds || !dates?.before || !dates?.after) {
       return res
         .status(400)
         .json({ error: "Missing bounds or dates parameters." });
     }
-
-    await initGEE();
 
     // Define Geometry
     const geometry = ee.Geometry.Rectangle([
@@ -239,15 +211,16 @@ export const analyze = async (req, res) => {
     // --- Critical Fix: Safe Image Fetcher ---
     // This function checks if data exists BEFORE processing
     const getSafeComposite = async (dateStr, label) => {
-      const startDate = ee.Date(dateStr);
+      const centerDate = ee.Date(dateStr);
       // Increased window to 3 months to reduce "No Data" errors
-      const endDate = startDate.advance(3, "month");
+      const startDate = centerDate.advance(-2, "month");
+      const endDate = centerDate.advance(2, "month");
 
       const collection = ee
         .ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
         .filterDate(startDate, endDate)
         .filterBounds(geometry)
-        .filter(ee.Filter.lt("CLOUDY_PIXEL_PERCENTAGE", 50)) // Relaxed cloud filter
+        .filter(ee.Filter.lt("CLOUDY_PIXEL_PERCENTAGE", 100)) // Relaxed cloud filter
         .map(maskS2clouds);
 
       // ASYNC CHECK: Does this collection have images?
@@ -255,7 +228,7 @@ export const analyze = async (req, res) => {
 
       if (count === 0) {
         throw new Error(
-          `No clear satellite images found for '${label}' date (${dateStr}) in this region. Try a different date range.`
+          `No clear satellite images found for '${label}' date (${dateStr}) in this region. Try a different date range.`,
         );
       }
 
@@ -279,7 +252,7 @@ export const analyze = async (req, res) => {
         details: fetchErr.message,
       });
     }
-   console.log("retrieved images");
+    console.log("retrieved images");
     // Case 2: Calculation (Now safe because images are guaranteed to exist)
     const calcNDVI = (img) =>
       img.normalizedDifference(["B8", "B4"]).rename("NDVI");
@@ -293,11 +266,11 @@ export const analyze = async (req, res) => {
     // 2. Calculate the Z-Score Image (Surprise Factor)
     // Formula: Z = (Observed Value - Mean) / Standard Deviation
     // We use the EVI value of the 'Before' image as the "Observed Value" to see how unusual it is.
-    const beforeEVI = calcEVI(beforeImg);
+    const afterEVI = calcEVI(afterImg);
 
     // 2. Calculate the Z-Score Image: Z = (X - mu) / sigma
     // IMPORTANT: This creates the Z-Score map for every pixel.
-    const ZScoreImage = beforeEVI
+    const ZScoreImage = afterEVI
       .subtract(historical.muImage) // Subtract the historical mean (mu) map
       .divide(historical.sigmaImage) // Divide by the historical variability (sigma) map
       .rename("ZScore");
@@ -335,12 +308,12 @@ export const analyze = async (req, res) => {
       .subtract(calcNBR(beforeImg))
       .rename("Delta_NBR");
 
-    const areaLossKm2Image = calculateAreaMetrics(
+    const areaLossm2Image = calculateAreaMetrics(
       deltaEVI,
       ZScoreImage,
       geometry,
       -0.15,
-      -2.0
+      -2.0,
     );
     console.log("getting data");
     // Case 3: Processing & URL Generation
@@ -354,7 +327,7 @@ export const analyze = async (req, res) => {
       statsNDBI,
       statsNBR,
       statsZScore,
-      statsAreaLoss
+      statsAreaLoss,
     ] = await Promise.all([
       getUrl(beforeImg, {
         ...visParamsRGB,
@@ -374,24 +347,50 @@ export const analyze = async (req, res) => {
         region: geometry,
         format: "png",
       }),
-      getRegionStats(ndviChange, geometry, ee.Reducer.mean(), 20),
-      getRegionStats(deltaEVI, geometry, ee.Reducer.mean(), 20),
-      getRegionStats(deltaNDMI, geometry, ee.Reducer.mean(), 20),
-      getRegionStats(deltaNDBI, geometry, ee.Reducer.mean(), 20),
-      getRegionStats(deltaNBR, geometry, ee.Reducer.mean(), 20),
-      getRegionStats(ZScoreImage, geometry, ee.Reducer.mean(), 20),
-      getRegionStats(areaLossKm2Image, geometry, ee.Reducer.sum(), 20), // Sums the area
+      getRegionStats(ndviChange, geometry, ee.Reducer.mean(), 100),
+      getRegionStats(deltaEVI, geometry, ee.Reducer.mean(), 100),
+      getRegionStats(deltaNDMI, geometry, ee.Reducer.mean(), 100),
+      getRegionStats(deltaNDBI, geometry, ee.Reducer.mean(), 100),
+      getRegionStats(deltaNBR, geometry, ee.Reducer.mean(), 100),
+      getRegionStats(ZScoreImage, geometry, ee.Reducer.mean(), 100),
+      getRegionStats(areaLossm2Image, geometry, ee.Reducer.sum(), 100), // Sums the area
     ]);
 
-    console.log("sending response");
+    console.log("getting response from GEE");
 
-    // Success Response
-    res.json({
-      success: true,
-      data: {
-        
+    const [permBefore, permAfter, permDiff] = await Promise.all([
+      saveToCloudinary(beforeUrl, "tree-trace/before"),
+      saveToCloudinary(afterUrl, "tree-trace/after"),
+      saveToCloudinary(diffUrl, "tree-trace/diff"),
+    ]);
+
+    const centerLat = (bounds._southWest.lat + bounds._northEast.lat) / 2;
+    const centerLng = (bounds._southWest.lng + bounds._northEast.lng) / 2;
+
+    const newReport = await ReportModel.create({
+      center_point: {
+        type: "Point",
+       coordinates: [centerLng, centerLat],
       },
+      locationName,
+      beforeDate: dates.before,
+      afterDate: dates.after,
+      before_image: permBefore,
+      after_image:permAfter,
+      ndvi_diff_image: permDiff,
+      mean_ndvi_change: stats.NDVI_Change, 
+      mean_evi_change: statsEVI.Delta_EVI,
+      mean_ndmi_change: statsNDMI.Delta_NDMI,
+      mean_ndbi_change: statsNDBI.Delta_NDBI,
+      mean_nbr_change: statsNBR.Delta_NBR,
+      mean_z_score: statsZScore.ZScore,
+      historical_baseline_mu: historical.mu,
+      historical_variability_sigma: historical.sigma,
+      area_of_loss_m2: statsAreaLoss.Area_Loss_m2,
     });
+
+   console.log("✅ Report Saved:", newReport._id);
+    res.status(201).json({ success: true, reportId: newReport._id });
   } catch (err) {
     // Case 4: Catch-all for Server Errors (Auth failure, GEE timeout)
     console.error("GEE Server Error:", err);

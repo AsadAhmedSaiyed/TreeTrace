@@ -1,6 +1,6 @@
 import { tool, generateText } from "ai";
 import { z } from "zod";
-import getSummary from "./getSummary";
+import getSummary from "./getSummary.js";
 
 const summaryAgentTool = tool({
   description:

@@ -1,38 +1,35 @@
-import { generateText } from "ai";
+import { google } from "@ai-sdk/google"; 
 import { generateObject } from "ai";
-const generateEmailContent = async ({ reportData }) => {
-    const model = "google/gemini-2.5-flash";
+import {z} from "zod";
+const generateEmailContent = async ({ summary }) => {
+    console.log("Generating email content...");
+    const model = google("gemini-2.5-flash");
   const systemPrompt = `
-    You are a Senior Environmental Communications Specialist. 
-    Your task is to draft a high-stakes email alert for an NGO.
+   You are a Senior Environmental Communications Specialist. 
+    Draft a high-stakes email alert for an NGO in a concise words.
     
-    MAANG-Level Standards:
-    1. Structure: Summary -> Key Metrics -> Action.
-    2. Precision: Use exact coordinates, km² of loss, and Z-scores.
-    3. Output: You MUST return a JSON object with "subject" and "body".
-    
-    HTML Body Requirements:
-    - Use <strong> for labels.
-    - Use <ul> for metrics.
+    **SOURCE CONTENT:**
+    Use this summary as your primary content: "${summary}"
+
+    **STANDARDS:**
+    1. Narrative Consistency: Use the provided summary as the 'Executive Summary'.
+    2. Structure: Executive Summary -> Urgency Statement -> Immediate Action.
+    3. Formatting: Use <strong> for emphasis and <p> for paragraphs in the HTML body.
+    4. Output: Return a JSON object with "subject" and "body".
   `;
-    const userPrompt = `Generate a professional HTML email body for this report: ${JSON.stringify(reportData)}`;
-    const response = await generateText({
+    const userPrompt = `Draft an email based on this report summary: ${summary}`;
+    const response = await generateObject({
         model,
         system :systemPrompt,
         prompt:userPrompt,
-        config:{
-            responseMimeType: "application/json",
-            responseSchema: {
-                type: "object",
-                properties: {
-                    subject: { type: "string" },
-                    body: { type: "string" },
-                },
-                required: ["subject", "body"],
-            },
-        },
+       
+        schema: z.object({
+              subject: z.string(),
+              body: z.string(),
+            }),
     });
-    return JSON.parse(response.text);
+    console.log("email content generated", response.object);
+    return response.object;
 };
 
 export default generateEmailContent;

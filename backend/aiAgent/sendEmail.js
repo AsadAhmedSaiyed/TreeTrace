@@ -5,9 +5,10 @@ import { Resend } from "resend";
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendEmail = async ({email,subject,body}) => {
+  console.log("Sending email...");
   try{
     const { data, error } = await resend.emails.send({
-    from: "TreeTrace <asadahmedsaiyed786@gmail.com>",
+    from: "TreeTrace <onboarding@resend.dev>",
     to: [email],
     subject: subject,
     html: `<div>${body}</div>`,

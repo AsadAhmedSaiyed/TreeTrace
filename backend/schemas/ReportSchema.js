@@ -22,6 +22,10 @@ const ReportSchema = new Schema({
       required: true,
     },
   },
+  locationName :{
+    type:String,
+    required:true
+  },
   status: {
     type: String,
     default: "PENDING",
@@ -83,7 +87,7 @@ const ReportSchema = new Schema({
     type: Number,
     required: true,
   },
-  area_of_loss_km2: {
+  area_of_loss_m2: {
     type: Number,
     required: true,
   },
@@ -91,6 +95,10 @@ const ReportSchema = new Schema({
     type:String,
     default: "Pending"
   },
+  alertSent: {
+    type: Boolean,
+    default: false
+  }
 },{
     timestamps: true,
 });

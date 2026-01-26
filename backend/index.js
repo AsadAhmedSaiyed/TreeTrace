@@ -10,7 +10,6 @@ const PORT = process.env.PORT || 5000;
 import ee from "@google/earthengine";
 import fs from "fs";
 import ReportModel from "./models/ReportModel.js";
-dotenv.config();
 const keyFile = process.env.GEE_KEY_PATH;
 console.log("keyFile : ", keyFile);
 let initialized = false;
@@ -18,11 +17,9 @@ let initialized = false;
 async function initGEE() {
   if (!initialized) {
     const privateKeyData = JSON.parse(fs.readFileSync(keyFile, "utf8"));
-    const { client_email, private_key } = privateKeyData;
-
     await new Promise((resolve, reject) => {
       ee.data.authenticateViaPrivateKey(
-        { client_email, private_key },
+        privateKeyData,
         () => {
           ee.initialize(
             null,
@@ -32,10 +29,10 @@ async function initGEE() {
               console.log("GEE initialized");
               resolve();
             },
-            (err) => reject(err)
+            reject
           );
         },
-        (err) => reject(err)
+        reject
       );
     });
   }
@@ -75,10 +72,12 @@ async function connectToDb() {
   try {
     await mongoose.connect(url);
     console.log("MongoDB connected");
-
+   
     app.listen(PORT, () => {
       console.log(`App started on port ${PORT}`);
     });
+
+    await initGEE();
   } catch (err) {
     console.error("Connection failed!", err);
   }
