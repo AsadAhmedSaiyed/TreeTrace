@@ -1,5 +1,6 @@
 import { useState } from "react";
 import L from "leaflet";
+import { useNavigate } from "react-router-dom";
 import "@geoman-io/leaflet-geoman-free";
 import "@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css";
 
@@ -26,6 +27,8 @@ function RecenterMap({ coords }) {
 }
 
 function Map() {
+  let [reportId, setReportId] = useState(null);
+  const navigate = useNavigate();
   let [completed,setCompleted] = useState(false);
   let [data, setData] = useState({
     country: "",
@@ -103,11 +106,17 @@ function Map() {
       const url = `${import.meta.env.VITE_BACKEND_URL}/analyze`;
       const response = await axios.post(url, inputData);
       console.log(response.data);
+      setReportId(response.data.reportId);
       setCompleted(true);
     } catch (err) {
       console.error("Error while fetching GEE  data : ", err);
     }
   };
+
+  const handleSeeReport = () =>{
+    navigate(`/report/${reportId}`);
+  };
+
   return (
     <div>
       <form>
@@ -161,7 +170,8 @@ function Map() {
         </MapContainer>
       )}
       {area && <button onClick={getGeeData}>Check tree loss</button>}
-      {completed && <button onClick={getReport}>see report</button>}
+      <br />
+      {completed && <button onClick={handleSeeReport}>see report</button>}
     </div>
   );
 }

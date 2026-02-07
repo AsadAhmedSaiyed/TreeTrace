@@ -1,12 +1,17 @@
 import "./App.css";
+import {BrowserRouter,Routes,Route} from 'react-router-dom'
 import Map from "./Map.jsx";
+import ReportPage from "./pages/ReportPage.jsx";
 function App() {
   
 
   return (
-    <div>
-      <Map></Map>
-    </div>
+    <BrowserRouter>
+       <Routes>
+          <Route path="/" element={<Map></Map>}></Route>
+          <Route path="/report/:id" element={<ReportPage/>}></Route>
+       </Routes>
+    </BrowserRouter>
   )
 }
 

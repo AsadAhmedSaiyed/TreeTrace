@@ -45,7 +45,8 @@ app.use(
   })
 );
 app.use(express.json());
-app.post("/report/:id", async (req, res) => {
+app.get("/report/:id", async (req, res) => {
+  let start = Date.now();
   try {
     let { id } = req.params;
     const report = await ReportModel.findById(id).lean();
@@ -54,6 +55,7 @@ app.post("/report/:id", async (req, res) => {
         message: "Report Not found!",
       });
     }
+    console.log(Date.now()-start);
     return res.status(200).json({
       success: true,
       report,
@@ -66,6 +68,7 @@ app.post("/report/:id", async (req, res) => {
   }
 });
 app.post("/analyze", analyze);
+
 
 // Connect to MongoDB and start server
 async function connectToDb() {

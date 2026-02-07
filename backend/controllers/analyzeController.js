@@ -5,7 +5,6 @@ import ReportModel from "../models/ReportModel.js";
 
 dotenv.config();
 
-
 // --- Core Index Calculation Functions ---
 
 // 1. Enhanced Vegetation Index (EVI) - Best for Greenness
@@ -119,7 +118,7 @@ const getHistoricalStats = async (geometry, dates) => {
   // 1. Define the historical time window
   const beforeDate = ee.Date(dates.before);
   const endYear = beforeDate.get("year").getInfo(); // Get the year of your "Before" image (e.g., 2025)
-  const startYear = endYear - 5; // Start 5 years prior (e.g., 2020)
+  const startYear = endYear - 2; // Start 5 years prior (e.g., 2020)
 
   // Use the .get('month') to retrieve the month number (1-12)
   const startMonthNum = beforeDate.get("month").getInfo(); // Get the month number as a JS value
@@ -190,8 +189,9 @@ const calculateAreaMetrics = (
 // --- 3. Main Logic ---
 
 export const analyze = async (req, res) => {
+  let start = Date.now();
   try {
-    const { bounds, dates,locationName } = req.body;
+    const { bounds, dates, locationName } = req.body;
     console.log(locationName);
     // Case 0: Input Validation
     if (!bounds || !dates?.before || !dates?.after) {
@@ -224,13 +224,13 @@ export const analyze = async (req, res) => {
         .map(maskS2clouds);
 
       // ASYNC CHECK: Does this collection have images?
-      const count = await evaluate(collection.size());
+      // const count = await evaluate(collection.size());
 
-      if (count === 0) {
-        throw new Error(
-          `No clear satellite images found for '${label}' date (${dateStr}) in this region. Try a different date range.`,
-        );
-      }
+      // if (count === 0) {
+      //   throw new Error(
+      //     `No clear satellite images found for '${label}' date (${dateStr}) in this region. Try a different date range.`,
+      //   );
+      // }
 
       // If safe, return the composite
       return collection.median().clip(geometry);
@@ -358,11 +358,19 @@ export const analyze = async (req, res) => {
 
     console.log("getting response from GEE");
 
-    const [permBefore, permAfter, permDiff] = await Promise.all([
+    const uploadPromise = Promise.all([
       saveToCloudinary(beforeUrl, "tree-trace/before"),
       saveToCloudinary(afterUrl, "tree-trace/after"),
       saveToCloudinary(diffUrl, "tree-trace/diff"),
-    ]);
+    ]).then(async ([permBefore, permAfter, permDiff]) => {
+      console.log("Background upload complete. Updating DB...");
+      await ReportModel.findByIdAndUpdate(newReport._id, {
+        before_image: permBefore,
+        after_image: permAfter,
+        ndvi_diff_image: permDiff,
+      });
+      console.log("Images saved!");
+    });
 
     const centerLat = (bounds._southWest.lat + bounds._northEast.lat) / 2;
     const centerLng = (bounds._southWest.lng + bounds._northEast.lng) / 2;
@@ -370,15 +378,15 @@ export const analyze = async (req, res) => {
     const newReport = await ReportModel.create({
       center_point: {
         type: "Point",
-       coordinates: [centerLng, centerLat],
+        coordinates: [centerLng, centerLat],
       },
       locationName,
       beforeDate: dates.before,
       afterDate: dates.after,
-      before_image: permBefore,
-      after_image:permAfter,
-      ndvi_diff_image: permDiff,
-      mean_ndvi_change: stats.NDVI_Change, 
+      before_image: beforeUrl,
+      after_image: afterUrl,
+      ndvi_diff_image: diffUrl,
+      mean_ndvi_change: stats.NDVI_Change,
       mean_evi_change: statsEVI.Delta_EVI,
       mean_ndmi_change: statsNDMI.Delta_NDMI,
       mean_ndbi_change: statsNDBI.Delta_NDBI,
@@ -389,7 +397,8 @@ export const analyze = async (req, res) => {
       area_of_loss_m2: statsAreaLoss.Area_Loss_m2,
     });
 
-   console.log("✅ Report Saved:", newReport._id);
+    console.log("✅ Report Saved:", newReport._id);
+    console.log(Date.now() - start);
     res.status(201).json({ success: true, reportId: newReport._id });
   } catch (err) {
     // Case 4: Catch-all for Server Errors (Auth failure, GEE timeout)
