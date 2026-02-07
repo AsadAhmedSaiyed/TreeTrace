@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import { analyze } from "./controllers/analyzeController.js";
 dotenv.config();
+import runMainAgent from "./aiAgent/mainAgent.js";
 import cors from "cors";
 const url = process.env.MONGO_URI;
 const app = express();
@@ -45,8 +46,7 @@ app.use(
   })
 );
 app.use(express.json());
-app.get("/report/:id", async (req, res) => {
-  let start = Date.now();
+app.get("/reports/:id", async (req, res) => {
   try {
     let { id } = req.params;
     const report = await ReportModel.findById(id).lean();
@@ -55,7 +55,6 @@ app.get("/report/:id", async (req, res) => {
         message: "Report Not found!",
       });
     }
-    console.log(Date.now()-start);
     return res.status(200).json({
       success: true,
       report,
@@ -68,7 +67,27 @@ app.get("/report/:id", async (req, res) => {
   }
 });
 app.post("/analyze", analyze);
-
+app.post("/reports/:id/generate-summary",async (req,res)=>{
+  const start = Date.now();
+   try{
+      console.log("Fetching summary");
+      const {id} = req.params;
+      const {reportData,email} = req.body;
+      console.log("Report Data : ",reportData);
+      const result = await runMainAgent(reportData,email);
+      console.log(result);
+      console.log(Date.now()-start);
+    return res.status(200).json({
+      success: true,
+      result,
+    });
+   }catch(e){
+      console.error("Error while generating summary : ", e.message);
+    return res.status(500).json({
+      message: "Server error while generating summary!",
+    });
+   }
+});
 
 // Connect to MongoDB and start server
 async function connectToDb() {

@@ -4,11 +4,16 @@ import { z } from "zod"; // <--- FIXED: Added missing import
 
 const getSummary = async ({ reportData }) => {
   console.log("Generating summary...");
-
+  console.log(reportData);
   // <--- FIXED: Used stable model ID to prevent "404 Not Found"
   const model = google("gemini-2.5-flash");
+  console.log(reportData.mean_ndvi_change <= -0.05);
+  console.log(reportData.area_of_loss_m2);
+  console.log(reportData.mean_z_score <= -0.8);
   const lossDetected =
-    reportData.mean_ndvi_change < -0.1 && reportData.area_of_loss_km2 > 0.1;
+     reportData.mean_ndvi_change <= -0.05 &&        // meaningful vegetation decline
+  reportData.area_of_loss_m2 >= 1000000 &&     // ≥ 1 km² (large-scale loss)
+  reportData.mean_z_score <= -0.8;
   const systemPrompt = `
      You are a senior environmental analyst.
 
@@ -20,9 +25,9 @@ RULES:
 3. You MUST explicitly mention:
    - Mean NDVI change (vegetation health)
    - Mean NDMI change (moisture condition)
-   - Area affected in square kilometers (km²)
+   - Area affected in square meters (m²)
 4. Clearly reference the monitoring period using the provided dates.
-5. Comment briefly on the statistical significance using the Z-score.
+5. Comment briefly on the Z-score, clearly distinguishing between sudden anomalies and gradual long-term change.
 6. Do NOT make any judgment about alerting, severity thresholds, or loss classification.
 7. Do NOT include recommendations or calls to action.
 
@@ -42,11 +47,9 @@ Return a single JSON object with exactly one field:
       summary: z.string(),
     }),
   });
-
-  // <--- FIXED: Access 'response.object', not 'object'
-  console.log("Summary generated:", response.object);
-  console.log("Loss : ", lossDetected);
-
+  
+  console.log("Loss detected : ",lossDetected);
+  
   return {
     summary: response.object.summary,
     loss_detected: lossDetected,

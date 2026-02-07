@@ -9,9 +9,9 @@ const summaryAgentTool = tool({
   inputSchema: z.object({
     reportData: z
       .object({
-        location: z
-          .array(z.number())
-          .describe("Longitude and Latitude coordinates [lng, lat]."),
+        locationName: z
+          .string()
+          .describe("Name of area."),
         beforeDate: z
           .string()
           .describe("The starting date for the change analysis."),
@@ -52,10 +52,10 @@ const summaryAgentTool = tool({
           .describe(
             "Historical standard deviation (sigma) of the change metric."
           ),
-        area_of_loss_km2: z
+        area_of_loss_m2: z
           .number()
           .describe(
-            "Calculated area of tree/vegetation loss in square kilometers."
+            "Calculated area of tree/vegetation loss in square meters."
           ),
       })
       .describe("The complete, structured data from the environmental report."),

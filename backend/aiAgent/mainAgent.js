@@ -35,29 +35,32 @@ const runMainAgent = async (reportData, ngoEmail) => {
   // Extract the structured data from the tool result
   let lossDetected = false;
   let generatedSummary = "";
+  let result= "";
 
   // Helper to find tool results safely
-  const summaryStep = analysisResponse.steps.find(step => 
-    step.toolResults?.some(res => res.toolName === 'summaryAgent')
+  const summaryStep = analysisResponse.steps.find((step) =>
+    step.toolResults?.some((res) => res.toolName === "summaryAgent"),
   );
 
   if (summaryStep) {
     const toolOutput = summaryStep.toolResults[0].output;
     lossDetected = toolOutput.loss_detected;
     generatedSummary = toolOutput.summary;
-    console.log(`📊 Analysis Complete. Loss Detected: ${lossDetected}`);
+    result = "ALL CLEAR: No loss detected.";
   } else {
-    return "❌ Error: Analysis failed to run.";
+    result = "❌ Error: Analysis failed to run.";
   }
 
   // --- STEP 2: LOGIC GATE (The "Deterministic" Part) ---
   if (!lossDetected) {
-    return "✅ ALL CLEAR: No loss detected. Workflow ends.";
+    return {
+      result,
+      generatedSummary,
+    };
   }
 
   // --- STEP 3: ACTION PHASE ---
-  console.log("⚠️ Phase 3: Critical Loss Detected. Initiating Alert Protocol...");
-  
+
   const alertResponse = await generateText({
     model,
     system: commsSystemPrompt,
@@ -70,16 +73,20 @@ const runMainAgent = async (reportData, ngoEmail) => {
   });
 
   // Check if email was actually sent
-  const emailStep = alertResponse.steps.find(step => 
-    step.toolCalls?.some(call => call.toolName === 'emailAgent')
+  const emailStep = alertResponse.steps.find((step) =>
+    step.toolCalls?.some((call) => call.toolName === "emailAgent"),
   );
 
   if (emailStep) {
-    return "🚨 CRITICAL ALERT SENT: Deforestation detected and NGO notified.";
+    result = "🚨 CRITICAL ALERT SENT: Deforestation detected and NGO notified.";
   } else {
     // This is highly unlikely now, but good to handle
-    return "⚠️ SYSTEM FAILURE: Analysis found loss, but Email Agent failed to fire.";
+    result =  "⚠️ SYSTEM FAILURE: Analysis found loss, but Email Agent failed to fire.";
   }
+  return {
+    result,
+    generatedSummary
+  };
 };
 
 export default runMainAgent;
