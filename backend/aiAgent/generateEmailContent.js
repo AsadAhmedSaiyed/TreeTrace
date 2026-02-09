@@ -1,31 +1,40 @@
 import { google } from "@ai-sdk/google"; 
 import { generateObject } from "ai";
 import {z} from "zod";
-const generateEmailContent = async ({ summary }) => {
+const generateEmailContent = async ({ summary, locationName }) => {
+
     console.log("Generating email content...");
+    console.log(locationName);
     const model = google("gemini-2.5-flash");
   const systemPrompt = `
    You are a Senior Environmental Communications Specialist. 
-    Draft a high-stakes email alert for an NGO in a concise words.
+   Task: Convert satellite telemetry and summaries into high-stakes, concise email alerts for an NGO.
     
     **SOURCE CONTENT:**
-    Use this summary as your primary content: "${summary}"
+    Primary Narrative: "${summary}"
+    Raw Metrics: NDVI Change, Area, Z-Score.
 
     **STANDARDS:**
     1. Narrative Consistency: Use the provided summary as the 'Executive Summary'.
     2. Structure: Executive Summary -> Urgency Statement -> Immediate Action.
     3. Formatting: Use <strong> for emphasis and <p> for paragraphs in the HTML body.
-    4. Output: Return a JSON object with "subject" and "body".
+    4. Conciseness: Total length must not exceed 150 words.
+    5. Output: Return a JSON object with "subject" and "body".
   `;
-    const userPrompt = `Draft an email based on this report summary: ${summary}`;
+
+    const userPrompt = `
+    Draft a concise email alert for the location: ${locationName}. 
+    Focus on the statistical significance (Z-Score) and the physical scale of the loss.
+  `;
+    
     const response = await generateObject({
         model,
         system :systemPrompt,
         prompt:userPrompt,
        
         schema: z.object({
-              subject: z.string(),
-              body: z.string(),
+              subject: z.string().describe("Urgent, data-heavy subject line including location name"),
+              body: z.string().describe("HTML body, max 150 words, bulleted stats"),
             }),
     });
     console.log("email content generated", response.object);

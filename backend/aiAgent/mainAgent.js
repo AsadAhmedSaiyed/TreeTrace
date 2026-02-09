@@ -35,7 +35,7 @@ const runMainAgent = async (reportData, ngoEmail) => {
   // Extract the structured data from the tool result
   let lossDetected = false;
   let generatedSummary = "";
-  let result= "";
+  let result = "";
 
   // Helper to find tool results safely
   const summaryStep = analysisResponse.steps.find((step) =>
@@ -60,33 +60,32 @@ const runMainAgent = async (reportData, ngoEmail) => {
   }
 
   // --- STEP 3: ACTION PHASE ---
-
-  const alertResponse = await generateText({
-    model,
-    system: commsSystemPrompt,
-    tools: { emailAgent: emailAgentTool },
-    maxSteps: 2,
-    // We pass the summary from Step 1 into the prompt for Step 3
-    prompt: `Send a CRITICAL ALERT to ${ngoEmail}. 
-             Context Summary: "${generatedSummary}". 
-             Action: SEND_ALERT.`,
-  });
-
-  // Check if email was actually sent
-  const emailStep = alertResponse.steps.find((step) =>
-    step.toolCalls?.some((call) => call.toolName === "emailAgent"),
-  );
-
-  if (emailStep) {
-    result = "🚨 CRITICAL ALERT SENT: Deforestation detected and NGO notified.";
-  } else {
-    // This is highly unlikely now, but good to handle
-    result =  "⚠️ SYSTEM FAILURE: Analysis found loss, but Email Agent failed to fire.";
-  }
-  return {
-    result,
-    generatedSummary
+  const sendEmailInBackground = async (generatedSummary, ngoEmail) => {
+    try {
+      await generateText({
+        model,
+        system: commsSystemPrompt,
+        tools: { emailAgent: emailAgentTool },
+        prompt: `Send alert to ${ngoEmail}. Context: ${generatedSummary}, Location name : ${reportData.locationName}`,
+      });
+      console.log("✅ Background Alert Sent.");
+    } catch (error) {
+      // Log the error to a service like Sentry or Datadog
+      console.error("❌ Background Alert Failed:", error.message);
+    }
   };
+
+  if (lossDetected) {
+    console.log("Handoff to background worker...");
+
+    // We call it without await, but the function HAS its own internal try/catch
+    sendEmailInBackground(generatedSummary, ngoEmail);
+
+    return {
+      result: "ANALYSIS COMPLETE: Loss detected. Alerting NGO in background.",
+      generatedSummary,
+    };
+  }
 };
 
 export default runMainAgent;

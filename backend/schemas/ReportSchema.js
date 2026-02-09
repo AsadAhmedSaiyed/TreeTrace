@@ -95,9 +95,9 @@ const ReportSchema = new Schema({
     type:String,
     default: "Pending"
   },
-  alertSent: {
-    type: Boolean,
-    default: false
+  result: {
+    type: String,
+    default: "Pending"
   }
 },{
     timestamps: true,

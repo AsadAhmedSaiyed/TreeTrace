@@ -1,19 +1,16 @@
 import { google } from "@ai-sdk/google";
 import { generateObject } from "ai";
 import { z } from "zod"; // <--- FIXED: Added missing import
+import { detectTreeLoss } from "../utils/detectLoss.js";
 
 const getSummary = async ({ reportData }) => {
   console.log("Generating summary...");
   console.log(reportData);
   // <--- FIXED: Used stable model ID to prevent "404 Not Found"
   const model = google("gemini-2.5-flash");
-  console.log(reportData.mean_ndvi_change <= -0.05);
-  console.log(reportData.area_of_loss_m2);
-  console.log(reportData.mean_z_score <= -0.8);
-  const lossDetected =
-     reportData.mean_ndvi_change <= -0.05 &&        // meaningful vegetation decline
-  reportData.area_of_loss_m2 >= 1000000 &&     // ≥ 1 km² (large-scale loss)
-  reportData.mean_z_score <= -0.8;
+
+  const lossDetected = detectTreeLoss(reportData);
+
   const systemPrompt = `
      You are a senior environmental analyst.
 

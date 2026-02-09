@@ -8,15 +8,13 @@ const emailAgentTool = tool({
     "Orchestrates drafting and sending professional NGO email alerts.",
   // Inside your getSummaryTool definition:
   inputSchema: z.object({
-    summary:z.string().describe("Report summary."),     
+    summary:z.string().describe("Report summary."),   
+    locationName:z.string().describe("Name of area."),
     ngoEmail: z.string().describe("The recipient NGO email address."),
-    action: z.enum(["DRAFT_ONLY", "SEND_ALERT"]).describe("Whether to just draft or draft and send.")
   }),
-  execute: async ({summary,ngoEmail,action})=>{
-    const emailContent = await generateEmailContent({summary});
-    if (action === "DRAFT_ONLY") {
-      return { status: "DRAFTED", ...emailContent };
-    }
+  execute: async ({summary,locationName,ngoEmail,action})=>{
+    const emailContent = await generateEmailContent({summary,locationName});
+    
     try{
        await sendEmail({
         email:ngoEmail,
