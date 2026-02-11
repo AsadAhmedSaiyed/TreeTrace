@@ -9,7 +9,7 @@ import RoleSelectionPage from "./pages/RoleSelectionPage.jsx";
 import NGODashboard from "./pages/NGODashboard.jsx";
 import CheckUserRole from "./components/CheckUserRole.jsx";
 import RequireRole from "./components/RequireRole.jsx";
-
+import LandingPage from "./pages/LandingPage.jsx";
 function App() {
   return (
     <BrowserRouter>
@@ -45,7 +45,7 @@ function App() {
             </>
           }
         />
-
+        
         {/* Role Selection */}
         <Route
           path="/select-role"
@@ -55,10 +55,10 @@ function App() {
             </SignedIn>
           }
         />
-
+        <Route path="/" element={<LandingPage></LandingPage>}></Route>
         {/* User Routes */}
         <Route
-          path="/"
+          path="/app"
           element={
             <>
               <SignedIn>

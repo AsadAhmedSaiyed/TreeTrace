@@ -156,6 +156,11 @@ app.post("/users/save-user", requireAuth(),async (req, res) => {
   }
 });
 
+// Add this before app.listen()
+app.get("/", (req, res) => {
+  res.send("TreeTrace Backend is Running 🌳");
+});
+
 // Connect to MongoDB and start server
 async function connectToDb() {
   try {

@@ -3,7 +3,7 @@ import L from "leaflet";
 import { useNavigate } from "react-router-dom";
 import "@geoman-io/leaflet-geoman-free";
 import "@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css";
-
+import { useAuth } from "@clerk/clerk-react";
 import "leaflet/dist/leaflet.css";
 
 import "leaflet-draw";
@@ -27,6 +27,7 @@ function RecenterMap({ coords }) {
 }
 
 function Map() {
+  const {getToken} = useAuth();
   let [reportId, setReportId] = useState(null);
   const navigate = useNavigate();
   let [completed,setCompleted] = useState(false);
@@ -92,6 +93,7 @@ function Map() {
     }
   };
   const getGeeData = async () => {
+    const token = await getToken();
     const inputData = {
       bounds: area,
       dates: {
@@ -104,7 +106,12 @@ function Map() {
     console.log(data.city);
     try {
       const url = `${import.meta.env.VITE_BACKEND_URL}/analyze`;
-      const response = await axios.post(url, inputData);
+      console.log(url);
+      const response = await axios.post(url, inputData,{
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
       console.log(response.data);
       setReportId(response.data.reportId);
       setCompleted(true);

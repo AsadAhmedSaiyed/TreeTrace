@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
+import { useAuth } from "@clerk/clerk-react";
 
 const ReportPage = () => {
   const { id } = useParams();
   const [reportData, setReportData] = useState(null);
-
+  const {getToken} = useAuth();
+  
   // Helper to format dates
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-GB", {
@@ -30,8 +32,14 @@ const ReportPage = () => {
   useEffect(() => {
     const fetchReport = async () => {
       try {
+        const token = await getToken();
         const response = await axios.get(
           `${import.meta.env.VITE_BACKEND_URL}/reports/${id}`,
+          {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
         );
         setReportData(response.data.report);
         setTrigger(true);
@@ -45,13 +53,18 @@ const ReportPage = () => {
   const handleTrigger = async () => {
     try {
       const start = Date.now();
-
+      const token = await getToken();
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/reports/${id}/generate-summary`,
         {
           reportData,
           email: "asadahmedsaiyed786@gmail.com",
         },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       console.log(Date.now() - start);
 
@@ -69,6 +82,11 @@ const ReportPage = () => {
             summary: response.data.result.generatedSummary,
           },
         },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       console.log(res.data);
     } catch (e) {
