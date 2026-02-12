@@ -14,9 +14,7 @@ function App() {
   return (
     <BrowserRouter>
       <header>
-        <SignedIn>
-          <UserButton />
-        </SignedIn>
+       
       </header>
       <Routes>
         <Route
@@ -55,6 +53,7 @@ function App() {
             </SignedIn>
           }
         />
+
         <Route path="/" element={<LandingPage></LandingPage>}></Route>
         {/* User Routes */}
         <Route
