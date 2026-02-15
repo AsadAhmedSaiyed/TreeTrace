@@ -3,10 +3,16 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import { analyze } from "./controllers/analyzeController.js";
 dotenv.config();
-import { clerkClient, clerkMiddleware,requireAuth, getAuth } from "@clerk/express";
+import {
+  clerkClient,
+  clerkMiddleware,
+  requireAuth,
+  getAuth,
+} from "@clerk/express";
 import UserModel from "./models/UserModel.js";
 import runMainAgent from "./aiAgent/mainAgent.js";
 import cors from "cors";
+import NGOModel from "./models/NGOModel.js";
 const url = process.env.MONGO_URI;
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -49,7 +55,7 @@ app.use(
 );
 app.use(express.json());
 app.use(clerkMiddleware());
-app.get("/reports/:id",requireAuth() ,async (req, res) => {
+app.get("/reports/:id", requireAuth(), async (req, res) => {
   try {
     let { id } = req.params;
     const report = await ReportModel.findById(id).lean();
@@ -69,7 +75,7 @@ app.get("/reports/:id",requireAuth() ,async (req, res) => {
     });
   }
 });
-app.patch("/reports/:id",requireAuth(), async (req, res) => {
+app.patch("/reports/:id", requireAuth(), async (req, res) => {
   try {
     let { id } = req.params;
     const { updates } = req.body;
@@ -94,8 +100,8 @@ app.patch("/reports/:id",requireAuth(), async (req, res) => {
     });
   }
 });
-app.post("/analyze",requireAuth() ,analyze);
-app.post("/reports/:id/generate-summary", requireAuth(),async (req, res) => {
+app.post("/analyze", requireAuth(), analyze);
+app.post("/reports/:id/generate-summary", requireAuth(), async (req, res) => {
   const start = Date.now();
   try {
     console.log("Fetching summary");
@@ -117,11 +123,11 @@ app.post("/reports/:id/generate-summary", requireAuth(),async (req, res) => {
   }
 });
 
-app.post("/users/save-user", requireAuth(),async (req, res) => {
+app.post("/users/save-user", requireAuth(), async (req, res) => {
   try {
     const { userId } = getAuth(req);
     const { role } = req.body;
-    
+
     if (!["STANDARD_USER", "NGO_MANAGER"].includes(role)) {
       return res.status(400).json({ message: "Invalid role" });
     }
@@ -153,6 +159,87 @@ app.post("/users/save-user", requireAuth(),async (req, res) => {
   } catch (e) {
     console.error("Error setting role:", e);
     res.status(500).json({ message: "Failed to set role" });
+  }
+});
+
+app.post("/ngo/register",async (req,res)=>{
+  try {
+    const { name, email, center_point } = req.body;
+
+    // 1. Validation: Ensure all fields exist
+    if (!name || !email || !center_point || !center_point.coordinates) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Please provide name, email, and valid location coordinates." 
+      });
+    }
+
+    // 2. Check for Duplicates (Optional but recommended)
+    const existingNGO = await NGOModel.findOne({ email });
+    if (existingNGO) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "An NGO with this email is already registered." 
+      });
+    }
+
+    // 3. Create the new NGO
+    const newNGO = await NGOModel.create({
+      name,
+      email,
+      center_point: {
+        type: "Point", // Force type to be 'Point'
+        coordinates: center_point.coordinates // [Lng, Lat]
+      }
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "NGO registered successfully!",
+      ngoId:newNGO._id, 
+    });
+
+  } catch (error) {
+    console.error("Registration Error:", error);
+  
+    res.status(500).json({ 
+      success: false, 
+      message: "Server Error. Could not register NGO." 
+    });
+  }
+});
+
+app.get("/ngo/nearest", async (req, res) => {
+  try {
+    const { lat, lng } = req.query;
+    if (!lat || !lng) {
+      return res
+        .status(400)
+        .json({ error: "Latitude and Longitude are required" });
+    }
+
+    const nearestNGO = await NGOModel.findOne({
+      location: {
+        $near: {
+          $geometry: {
+            type: "Point",
+            coordinates: [parseFloat(lng), parseFloat(lat)],
+          },
+        },
+      },
+    }).select("email name");
+
+    if (!nearestNGO) {
+      return res.status(404).json({ message: "No NGO found nearby." });
+    }
+
+    res.status(200).json({
+      success: true,
+      ngo: nearestNGO,
+    });
+  } catch (e) {
+    console.error("Error in searching nearest NGO : ", e);
+    res.status(500).json({ message: "Failed find nearest NGO" });
   }
 });
 

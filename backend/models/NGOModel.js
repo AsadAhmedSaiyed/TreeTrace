@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import NGOSchema from "../schemas/NgoSchema";
+import NGOSchema from "../schemas/NGOSchema.js";
 
 const NGOModel = mongoose.model("NGO",NGOSchema);
 
