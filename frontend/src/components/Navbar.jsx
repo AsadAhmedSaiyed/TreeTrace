@@ -1,14 +1,14 @@
 import { useState } from "react";
-import scrollToSection from "../Util";
 import { useNavigate } from "react-router-dom";
 import { useUser, SignedIn, UserButton } from "@clerk/clerk-react";
-
+import { HashLink } from 'react-router-hash-link';
 function Navbar() {
   const navigate = useNavigate();
   const { isSignedIn, user } = useUser();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isDesktopSize, setIsDestopSize] = useState(true);
+
   const handleGetStarted = () => {
+    window.scrollTo(0,0);
     if (isSignedIn) {
       if (user.publicMetadata?.role === "STANDARD_USER") {
         navigate("/app");
@@ -34,23 +34,24 @@ function Navbar() {
           {/* Logo Section */}
           <div
             className="flex items-center gap-2 cursor-pointer shrink-0"
-            onClick={() => window.scrollTo(0, 0)}
+            id="top"
           >
             <span className="text-2xl">🌳</span>
-            <span className="font-bold text-xl bg-linear-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+            <HashLink smooth to={"/#top"} onClick={()=>window.scrollTo(0,0)} className="font-bold text-xl bg-linear-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
               TreeTrace
-            </span>
+            </HashLink>
           </div>
 
               <div className="hidden md:flex! items-center gap-8 ">
                 {navLinks.map((link) => (
-                  <button
+                  <HashLink
                     key={link.name}
-                    onClick={() => scrollToSection(link.id)}
+                    smooth
+                    to={`/#${link.id}`}
                     className="text-sm font-semibold text-slate-800 hover:text-emerald-600 transition-colors"
                   >
                     {link.name}
-                  </button>
+                  </HashLink>
                 ))}
               </div>
 
@@ -124,16 +125,18 @@ function Navbar() {
         <div className="md:hidden bg-white border-b border-slate-200 shadow-xl absolute w-full left-0 z-40">
           <div className="px-4 pt-2 pb-6 space-y-2">
             {navLinks.map((link) => (
-              <button
+              <HashLink
                 key={link.name}
+                smooth
+                to={`/#${link.id}`}
                 onClick={() => {
-                  scrollToSection(link.id);
+
                   setIsMobileMenuOpen(false); // Close menu after click
                 }}
                 className="block w-full text-left px-4 py-3 text-base font-semibold text-slate-700 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
               >
                 {link.name}
-              </button>
+              </HashLink>
             ))}
 
             <div className="pt-4 border-t border-slate-100 mt-2">

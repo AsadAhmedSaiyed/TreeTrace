@@ -1,4 +1,4 @@
-import scrollToSection from "../Util";
+import { HashLink } from "react-router-hash-link";
 function Footer() {
   return (
     <div className="relative z-10 bg-slate-950 text-slate-400 py-16 px-4 sm:px-6 lg:px-8 border-t border-slate-900">
@@ -36,19 +36,20 @@ function Footer() {
           <div>
             <h4 className="text-white font-semibold mb-4">Company</h4>
             <ul className="space-y-2 text-sm">
-              <li
+              <HashLink 
+              smooth
+               to={"/#about"}
                 className="hover:text-emerald-400 transition-colors"
-                onClick={() => scrollToSection("about")}
               >
                 About Us
-              </li>
+              </HashLink>
               <li className="hover:text-emerald-400 transition-colors">
                 Careers
               </li>
               <li className="hover:text-emerald-400 transition-colors">Blog</li>
-              <li onClick={() => scrollToSection("contact")} className="hover:text-emerald-400 transition-colors">
+              <HashLink smooth to={"/#contact"} className="hover:text-emerald-400 transition-colors">
                 Contact
-              </li>
+              </HashLink>
             </ul>
           </div>
 

@@ -4,6 +4,7 @@ function CTA() {
   const navigate = useNavigate();
   const { isSignedIn, user } = useUser();
   const handleGetStarted = () => {
+    window.scrollTo(0,0);
     if (isSignedIn) {
       if (user.publicMetadata?.role == "STANDARD_USER") {
         navigate("/app");

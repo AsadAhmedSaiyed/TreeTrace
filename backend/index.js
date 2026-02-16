@@ -219,7 +219,7 @@ app.get("/ngo/nearest", async (req, res) => {
     }
 
     const nearestNGO = await NGOModel.findOne({
-      location: {
+      center_point: {
         $near: {
           $geometry: {
             type: "Point",

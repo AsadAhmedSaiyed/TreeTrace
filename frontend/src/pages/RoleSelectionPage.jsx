@@ -34,7 +34,7 @@ export default function RoleSelectionPage() {
       await user.reload();
 
       if (selectedRole === 'NGO_MANAGER') {
-        navigate('/ngo/dashboard');
+        navigate('/ngo-form');
       } else {
         navigate('/');
       }

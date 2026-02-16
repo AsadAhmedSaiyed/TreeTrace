@@ -1,13 +1,31 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
+import {
+  MapPin,
+  Calendar,
+  Layers,
+  Activity,
+  Droplets,
+  Flame,
+  Building2,
+  AlertTriangle,
+  ArrowRight,
+  Leaf,
+  Info,
+} from "lucide-react";
 import { useAuth } from "@clerk/clerk-react";
+import ReportPageLoader from "../components/ReportPageLoader";
+import SummaryLoader from "../components/SummaryLoader";
 
 const ReportPage = () => {
+  const [show, setShow] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [ngo, setNGO] = useState(null);
   const { id } = useParams();
   const [reportData, setReportData] = useState(null);
-  const {getToken} = useAuth();
-  
+  const { getToken } = useAuth();
+
   // Helper to format dates
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-GB", {
@@ -28,7 +46,15 @@ const ReportPage = () => {
         return "bg-red-100 text-red-800 border border-red-200"; // Pending or Alert
     }
   };
-  const [trigger, setTrigger] = useState(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShow(false);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   useEffect(() => {
     const fetchReport = async () => {
       try {
@@ -36,21 +62,53 @@ const ReportPage = () => {
         const response = await axios.get(
           `${import.meta.env.VITE_BACKEND_URL}/reports/${id}`,
           {
-          headers: {
-            Authorization: `Bearer ${token}`,
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           },
-        }
         );
         setReportData(response.data.report);
-        setTrigger(true);
       } catch (e) {
         console.error("Error fetching report : ", e);
       }
     };
     fetchReport();
   }, [id]);
-  if (!reportData) return <div>Loading...</div>;
+
+  useEffect(() => {
+    if (!reportData || !reportData.center_point) return;
+    const findNearestNGO = async () => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/ngo/nearest`,
+          {
+            params: {
+              lat: reportData.center_point.coordinates[1], // Latitude
+              lng: reportData.center_point.coordinates[0], // Longitude
+            },
+            // Don't forget headers if this route is protected
+            // headers: { Authorization: `Bearer ${token}` }
+          },
+        );
+
+        const ngoDetails = response.data.ngo;
+        console.log("Found Nearest NGO:", ngoDetails);
+        setNGO(ngoDetails);
+      } catch (error) {
+        console.error("Could not find NGO:", error);
+      }
+    };
+    findNearestNGO();
+  }, [reportData]);
+
+  if (show || !reportData) {
+    return <ReportPageLoader />;
+  }
   const handleTrigger = async () => {
+    if (isGenerating) return; // Prevent double clicks
+
+    // Start Button Loader
+    setIsGenerating(true);
     try {
       const start = Date.now();
       const token = await getToken();
@@ -58,13 +116,13 @@ const ReportPage = () => {
         `${import.meta.env.VITE_BACKEND_URL}/reports/${id}/generate-summary`,
         {
           reportData,
-          email: "asadahmedsaiyed786@gmail.com",
+          email: ngo.email,
         },
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       console.log(Date.now() - start);
 
@@ -73,7 +131,7 @@ const ReportPage = () => {
         result: response.data.result.result,
         summary: response.data.result.generatedSummary,
       }));
-      setTrigger(false);
+
       const res = await axios.patch(
         `${import.meta.env.VITE_BACKEND_URL}/reports/${id}`,
         {
@@ -86,237 +144,368 @@ const ReportPage = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       console.log(res.data);
     } catch (e) {
       console.error("Error fetching summary : ", e);
+    } finally {
+      // Stop Button Loader (Runs whether success or error)
+      setIsGenerating(false);
     }
   };
+  const cardClass =
+    "bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-shadow duration-300";
   return (
-    <div className="report-container">
-      <div className="max-w-6xl mx-auto p-4 md:p-8 bg-gray-50 font-sans min-h-screen">
-        {/* --- HEADER SECTION --- */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 pb-6 border-b border-gray-200">
-          <div>
-            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-              {reportData.locationName}
-            </h1>
-            <span
-              className={`inline-block mt-3 px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase ${getStatusStyles(reportData.status)}`}
-            >
-              {reportData.status}
-            </span>
+    <div className="relative mt-10 mb-10 min-h-screen overflow-hidden bg-slate-50/50 font-sans text-slate-900">
+      {/* Animated Blobs */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-emerald-200/40 rounded-full mix-blend-multiply filter blur-3xl animate-blob" />
+        <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-teal-200/40 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000" />
+        <div className="absolute bottom-[-20%] left-[20%] w-96 h-96 bg-cyan-200/40 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000" />
+      </div>
+      {/* --- NGO ALERT BADGE --- */}
+      <div className="mt-10 ml-8 flex items-center gap-2">
+        <span className="text-xs font-bold text-black uppercase tracking-wider">
+          Alert Sent To:
+        </span>
+
+        {ngo ? (
+          <div className="flex items-center gap-2 px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-700 text-sm font-semibold animate-fade-in">
+            <Building2 size={14} />{" "}
+            {/* Ensure Building2 is imported from lucide-react */}
+            <span>{ngo.name}</span>
           </div>
-          <div className="mt-4 md:mt-0 text-right space-y-1">
-            <p className="text-sm text-gray-600">
-              <span className="font-semibold text-gray-900">Coordinates:</span>{" "}
-              {reportData.center_point.coordinates[1].toFixed(4)}° N,{" "}
-              {reportData.center_point.coordinates[0].toFixed(4)}° E
-            </p>
-            <p className="text-sm text-gray-600">
-              <span className="font-semibold text-gray-900">
-                Analysis Period:
-              </span>{" "}
-              {formatDate(reportData.beforeDate)} ➝{" "}
+        ) : (
+          // Skeleton Loader while searching for NGO
+          <div className="h-6 w-32 bg-slate-100 rounded-full animate-pulse" />
+        )}
+      </div>
+      {/* Content Container */}
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-8">
+        {/* --- HEADER SECTION --- */}
+        <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-sm border border-slate-100 p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
+                {reportData.locationName}
+              </h1>
+              {reportData.result !== "Pending" && (
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase ${getStatusStyles(reportData.status, reportData.result)}`}
+                >
+                  {reportData.status}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2 text-slate-500 text-sm">
+              <MapPin size={16} />
+              <span>
+                {reportData.center_point.coordinates[1].toFixed(4)}° N,{" "}
+                {reportData.center_point.coordinates[0].toFixed(4)}° E
+              </span>
+            </div>
+          </div>
+
+          <div className="bg-slate-50/50 px-5 py-3 rounded-xl border border-slate-100">
+            <div className="flex items-center gap-2 text-sm text-slate-600 mb-1">
+              <Calendar size={16} className="text-emerald-600" />
+              <span className="font-semibold">Analysis Period</span>
+            </div>
+            <div className="text-slate-900 font-medium">
+              {formatDate(reportData.beforeDate)}{" "}
+              <span className="text-slate-400 mx-1">➝</span>{" "}
               {formatDate(reportData.afterDate)}
-            </p>
+            </div>
           </div>
         </div>
 
         {/* --- VISUAL EVIDENCE SECTION --- */}
-        <div className="mb-10">
-          <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-            <span className="w-1 h-6 bg-green-500 mr-3 rounded-full"></span>
-            Satellite Imagery Evidence
-          </h2>
+        <section>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-emerald-100 rounded-lg text-emerald-600">
+              <Layers size={24} />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-800">
+              Satellite Imagery Evidence
+            </h2>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Card 1 */}
-            <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-              <div className="aspect-w-16 aspect-h-9 w-full h-64 overflow-hidden rounded-lg bg-gray-100">
+            {/* Before Image */}
+            <div className="group relative overflow-hidden rounded-2xl shadow-sm border border-slate-200 bg-white">
+              <div className="aspect-video w-full overflow-hidden bg-slate-100">
                 <img
                   src={reportData.before_image}
                   alt="Before Landscape"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full bg-slate-900 object-contain transition-transform duration-500 group-hover:scale-105"
                 />
               </div>
-              <p className="mt-3 text-sm font-medium text-center text-gray-600">
-                Before ({formatDate(reportData.beforeDate)})
-              </p>
+              <div className="p-4 border-t border-slate-100">
+                <p className="font-semibold text-slate-700">Before Analysis</p>
+                <p className="text-xs text-slate-500">
+                  {formatDate(reportData.beforeDate)}
+                </p>
+              </div>
             </div>
 
-            {/* Card 2 */}
-            <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-              <div className="aspect-w-16 aspect-h-9 w-full h-64 overflow-hidden rounded-lg bg-gray-100">
+            {/* After Image */}
+            <div className="group relative overflow-hidden rounded-2xl shadow-sm border border-slate-200 bg-white">
+              <div className="aspect-video w-full overflow-hidden bg-slate-100">
                 <img
                   src={reportData.after_image}
                   alt="After Landscape"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full bg-slate-900 object-contain transition-transform duration-500 group-hover:scale-105"
                 />
               </div>
-              <p className="mt-3 text-sm font-medium text-center text-gray-600">
-                After ({formatDate(reportData.afterDate)})
-              </p>
+              <div className="p-4 border-t border-slate-100">
+                <p className="font-semibold text-slate-700">After Analysis</p>
+                <p className="text-xs text-slate-500">
+                  {formatDate(reportData.afterDate)}
+                </p>
+              </div>
             </div>
 
-            {/* Card 3 */}
-            <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow ring-2 ring-red-50">
-              <div className="aspect-w-16 aspect-h-9 w-full h-64 overflow-hidden rounded-lg bg-gray-100">
+            {/* Difference Map */}
+            <div className="group relative overflow-hidden rounded-2xl shadow-md border-2 border-red-100 bg-white ring-4 ring-red-50/50">
+              <div className="aspect-video w-full overflow-hidden bg-slate-100 relative">
                 <img
                   src={reportData.ndvi_diff_image}
                   alt="Vegetation Loss Heatmap"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full bg-slate-900 object-contain transition-transform duration-500 group-hover:scale-105"
                 />
+                <div className="absolute top-2 right-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded shadow-sm">
+                  Heatmap
+                </div>
               </div>
-              <p className="mt-3 text-sm font-bold text-center text-red-600 flex justify-center items-center">
-                <svg
-                  className="w-4 h-4 mr-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                  ></path>
-                </svg>
-                Vegetation Loss Heatmap
-              </p>
+              <div className="p-4 border-t border-slate-100">
+                <p className="font-bold text-red-600 flex items-center gap-2">
+                  <AlertTriangle size={16} />
+                  Vegetation Loss Detected
+                </p>
+                <p className="text-xs text-slate-500">
+                  Red areas indicate high loss
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* --- METRICS DASHBOARD --- */}
-        <div className="mb-10">
-          <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-            <span className="w-1 h-6 bg-blue-500 mr-3 rounded-full"></span>
-            Environmental Impact Metrics
-          </h2>
+        <section>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+              <Activity size={24} />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-800">
+              Environmental Impact Metrics
+            </h2>
+          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Metric: Area Lost */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-red-100 relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-2 opacity-10">
-                <svg
-                  className="w-16 h-16"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* 1. Total Area Lost */}
+            <div
+              className={`${cardClass} border-l-4 border-l-red-500 relative overflow-hidden`}
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Total Area Lost
+                  </h3>
+                  <div className="mt-1 flex items-baseline gap-2">
+                    <span className="text-4xl font-extrabold text-slate-900">
+                      {(reportData.area_of_loss_m2 / 10000).toFixed(2)}
+                    </span>
+                    <span className="text-lg font-medium text-slate-500">
+                      hectares
+                    </span>
+                  </div>
+                </div>
+                <div className="p-2 bg-red-50 rounded-lg text-red-500">
+                  <AlertTriangle size={20} />
+                </div>
               </div>
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                Total Area Lost
-              </h3>
-              <p className="text-3xl font-extrabold text-gray-900">
-                {(reportData.area_of_loss_m2 / 10000).toFixed(2)}{" "}
-                <span className="text-lg font-medium text-gray-500">ha</span>
-              </p>
-              <p className="text-xs text-red-500 mt-2 font-medium">
-                ≈ {Math.round(reportData.area_of_loss_m2).toLocaleString()} m²
+              <p className="text-sm text-slate-600 bg-slate-50/50 p-3 rounded-lg border border-slate-100">
+                <span className="font-semibold text-slate-800">
+                  What it means:
+                </span>{" "}
+                The total size of land where vegetation has been destroyed or
+                removed.
               </p>
             </div>
 
-            {/* Metric: NDVI Change */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                Vegetation Health (NDVI)
-              </h3>
-              <p
-                className={`text-3xl font-extrabold ${reportData.mean_ndvi_change < 0 ? "text-red-600" : "text-green-600"}`}
-              >
-                {reportData.mean_ndvi_change > 0 ? "+" : ""}
-                {reportData.mean_ndvi_change.toFixed(3)}
-              </p>
-              <p className="text-xs text-gray-400 mt-2">
-                Negative values indicate loss of greenness density.
-              </p>
-            </div>
-
-            {/* Metric: Z-Score */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                Anomaly Score (Z-Score)
-              </h3>
-              <p className="text-3xl font-extrabold text-gray-800">
-                {reportData.mean_z_score.toFixed(2)}
-              </p>
-              <p className="text-xs text-gray-400 mt-2">
-                Scores below Data
-                <span className="font-bold text-gray-600">-2.0</span> are
-                statistically significant anomalies.
+            {/* 2. NDVI Change */}
+            <div className={cardClass}>
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Vegetation Health (NDVI)
+                  </h3>
+                  <div
+                    className={`mt-1 text-4xl font-extrabold ${reportData.mean_ndvi_change < 0 ? "text-red-600" : "text-emerald-600"}`}
+                  >
+                    {reportData.mean_ndvi_change > 0 ? "+" : ""}
+                    {reportData.mean_ndvi_change.toFixed(3)}
+                  </div>
+                </div>
+                <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600">
+                  <Leaf size={20} />
+                </div>
+              </div>
+              <p className="text-sm text-slate-600 bg-slate-50/50 p-3 rounded-lg border border-slate-100">
+                <span className="font-semibold text-slate-800">
+                  What it means:
+                </span>{" "}
+                A score of plant health. Negative numbers mean plants are dying
+                or have been cut down.
               </p>
             </div>
 
-            {/* Secondary Metrics List */}
-            <div className="bg-gray-50 p-5 rounded-xl border border-gray-200 flex flex-col justify-center">
-              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 pb-2 border-b border-gray-200">
-                Detailed Indices
-              </h3>
-              <ul className="space-y-3">
-                <li className="flex justify-between text-sm">
-                  <span className="text-gray-500">EVI Change:</span>
-                  <span className="font-semibold text-gray-700">
-                    {reportData.mean_evi_change.toFixed(3)}
-                  </span>
-                </li>
-                <li className="flex justify-between text-sm">
-                  <span className="text-gray-500">Moisture (NDMI):</span>
-                  <span className="font-semibold text-gray-700">
-                    {reportData.mean_ndmi_change.toFixed(3)}
-                  </span>
-                </li>
-                <li className="flex justify-between text-sm">
-                  <span className="text-gray-500">Burn/Structure:</span>
-                  <span className="font-semibold text-gray-700">
-                    {reportData.mean_nbr_change.toFixed(3)}
-                  </span>
-                </li>
-                <li className="flex justify-between text-sm">
-                  <span className="text-gray-500">Built-up (NDBI):</span>
-                  <span className="font-semibold text-gray-700">
-                    {reportData.mean_ndbi_change.toFixed(3)}
-                  </span>
-                </li>
-              </ul>
+            {/* 3. Z-Score */}
+            <div className={cardClass}>
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Anomaly Score (Z-Score)
+                  </h3>
+                  <div className="mt-1 text-4xl font-extrabold text-slate-800">
+                    {reportData.mean_z_score.toFixed(2)}
+                  </div>
+                </div>
+                <div className="p-2 bg-purple-50 rounded-lg text-purple-600">
+                  <Activity size={20} />
+                </div>
+              </div>
+              <p className="text-sm text-slate-600 bg-slate-50/50 p-3 rounded-lg border border-slate-100">
+                <span className="font-semibold text-slate-800">
+                  What it means:
+                </span>{" "}
+                How "unusual" this change is. A score below -2.0 confirms this
+                is not normal seasonal change.
+              </p>
             </div>
           </div>
-        </div>
+
+          {/* Detailed Indices Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+            {/* EVI */}
+            <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl border border-slate-200">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-bold text-slate-700">
+                  EVI Change
+                </span>
+                <span
+                  className={`font-mono font-bold ${reportData.mean_evi_change < 0 ? "text-red-500" : "text-emerald-500"}`}
+                >
+                  {reportData.mean_evi_change.toFixed(3)}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                <strong className="text-slate-700">Canopy Density:</strong>{" "}
+                Better than NDVI for thick forests. Detects if trees are
+                thinning.
+              </p>
+            </div>
+
+            {/* NDMI */}
+            <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl border border-slate-200">
+              <div className="flex justify-between items-center mb-2">
+                <div className="flex items-center gap-2">
+                  <Droplets size={14} className="text-blue-500" />
+                  <span className="text-sm font-bold text-slate-700">
+                    NDMI Change
+                  </span>
+                </div>
+                <span className="font-mono font-bold text-slate-700">
+                  {reportData.mean_ndmi_change.toFixed(3)}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                <strong className="text-slate-700">Moisture:</strong> Measures
+                water in leaves. A drop means plants are drying out (drought
+                stress).
+              </p>
+            </div>
+
+            {/* NBR */}
+            <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl border border-slate-200">
+              <div className="flex justify-between items-center mb-2">
+                <div className="flex items-center gap-2">
+                  <Flame size={14} className="text-orange-500" />
+                  <span className="text-sm font-bold text-slate-700">
+                    NBR Change
+                  </span>
+                </div>
+                <span className="font-mono font-bold text-slate-700">
+                  {reportData.mean_nbr_change.toFixed(3)}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                <strong className="text-slate-700">Burn Ratio:</strong> Designed
+                to find burnt areas or bare ground after a forest fire.
+              </p>
+            </div>
+
+            {/* NDBI */}
+            <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl border border-slate-200">
+              <div className="flex justify-between items-center mb-2">
+                <div className="flex items-center gap-2">
+                  <Building2 size={14} className="text-gray-500" />
+                  <span className="text-sm font-bold text-slate-700">
+                    NDBI Change
+                  </span>
+                </div>
+                <span className="font-mono font-bold text-slate-700">
+                  {reportData.mean_ndbi_change.toFixed(3)}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                <strong className="text-slate-700">Built-Up:</strong> Detects
+                concrete or buildings. Use this to see if forest was replaced by
+                construction.
+              </p>
+            </div>
+          </div>
+        </section>
 
         {/* --- SUMMARY SECTION --- */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8">
-          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-            <svg
-              className="w-5 h-5 mr-2 text-indigo-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              ></path>
-            </svg>
-            AI Analysis Summary and Result
-          </h3>
-          <p className="text-gray-700 leading-relaxed text-sm md:text-base">
-            {reportData.summary || "No summary generated yet."}
-          </p>
-          <hr></hr>
-          <p className="text-gray-700 leading-relaxed text-sm md:text-base">
-            {reportData.result}
-          </p>
-        </div>
+        <section className="bg-white/90 backdrop-blur-md rounded-2xl shadow-sm border border-slate-200 p-8 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-2 h-full bg-linear-to-b from-indigo-500 to-purple-500"></div>
+
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+              <Info size={24} />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900">
+              AI Analysis Summary
+            </h3>
+          </div>
+
+          <div className="prose prose-slate max-w-none">
+            <div className="bg-slate-50 p-6 rounded-xl border border-slate-100 mb-6">
+              <p className="text-slate-700 leading-relaxed text-base">
+                {reportData.summary || "No summary generated yet."}
+              </p>
+            </div>
+
+            {reportData.result && (
+              <>
+                <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">
+                  Detailed Conclusion
+                </h4>
+                <p className="text-slate-600 leading-relaxed">
+                  {reportData.result}
+                </p>
+              </>
+            )}
+          </div>
+        </section>
+
+        {/* --- ACTION BUTTON --- */}
+        {reportData.summary === "Pending" && (
+          <SummaryLoader isLoading={isGenerating} onClick={handleTrigger} />
+        )}
       </div>
-      {trigger && <button onClick={handleTrigger}>Get AI summary</button>}
     </div>
   );
 };
