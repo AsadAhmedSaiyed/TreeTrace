@@ -25,7 +25,8 @@ const ReportPage = () => {
   const { id } = useParams();
   const [reportData, setReportData] = useState(null);
   const { getToken } = useAuth();
-
+  const [loadCount,setLoadCount] = useState(0);
+  const [loadingImg, setLoadingImg] = useState(true);
   // Helper to format dates
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-GB", {
@@ -50,7 +51,7 @@ const ReportPage = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setShow(false);
-    }, 2000);
+    }, 100);
 
     return () => clearTimeout(timer);
   }, []);
@@ -110,7 +111,6 @@ const ReportPage = () => {
     // Start Button Loader
     setIsGenerating(true);
     try {
-      const start = Date.now();
       const token = await getToken();
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/reports/${id}/generate-summary`,
@@ -124,29 +124,55 @@ const ReportPage = () => {
           },
         },
       );
-      console.log(Date.now() - start);
-
-      setReportData((prev) => ({
-        ...prev,
-        result: response.data.result.result,
-        summary: response.data.result.generatedSummary,
-      }));
-
-      const res = await axios.patch(
-        `${import.meta.env.VITE_BACKEND_URL}/reports/${id}`,
-        {
-          updates: {
-            result: response.data.result.result,
-            summary: response.data.result.generatedSummary,
+      if (
+        response.data.result.result ===
+        "ANALYSIS COMPLETE: Loss detected. Alerting NGO in background."
+      ) {
+        setReportData((prev) => ({
+          ...prev,
+          alertSent: true,
+          result: response.data.result.result,
+          summary: response.data.result.generatedSummary,
+        }));
+        const res = await axios.patch(
+          `${import.meta.env.VITE_BACKEND_URL}/reports/${id}`,
+          {
+            updates: {
+              result: response.data.result.result,
+              summary: response.data.result.generatedSummary,
+              alertSent: true,
+            },
           },
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           },
-        },
-      );
-      console.log(res.data);
+        );
+        console.log(res.data);
+      } else {
+        setReportData((prev) => ({
+          ...prev,
+          result: response.data.result.result,
+          summary: response.data.result.generatedSummary,
+        }));
+
+        const res = await axios.patch(
+          `${import.meta.env.VITE_BACKEND_URL}/reports/${id}`,
+          {
+            updates: {
+              result: response.data.result.result,
+              summary: response.data.result.generatedSummary,
+            },
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+        console.log(res.data);
+      }
     } catch (e) {
       console.error("Error fetching summary : ", e);
     } finally {
@@ -154,33 +180,47 @@ const ReportPage = () => {
       setIsGenerating(false);
     }
   };
+  const handleImgLoad = () => {
+    setLoadCount((prev) => {
+      const newCount = prev + 1;
+      // Check if we have reached 3 images
+      if (newCount >= 3) {
+        setLoadingImg(false);
+      }
+      return newCount;
+    });
+  };
+  
   const cardClass =
     "bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-shadow duration-300";
   return (
-    <div className="relative mt-10 mb-10 min-h-screen overflow-hidden bg-slate-50/50 font-sans text-slate-900">
+    <div className="relative mt-17 mb-10 min-h-screen overflow-hidden bg-slate-50/50 font-sans text-slate-900">
       {/* Animated Blobs */}
+      {loadingImg && <ReportPageLoader></ReportPageLoader>}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-emerald-200/40 rounded-full mix-blend-multiply filter blur-3xl animate-blob" />
         <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-teal-200/40 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000" />
         <div className="absolute bottom-[-20%] left-[20%] w-96 h-96 bg-cyan-200/40 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000" />
       </div>
       {/* --- NGO ALERT BADGE --- */}
-      <div className="mt-10 ml-8 flex items-center gap-2">
-        <span className="text-xs font-bold text-black uppercase tracking-wider">
-          Alert Sent To:
-        </span>
+      {reportData.alertSent && (
+        <div className="mt-10 ml-8 flex items-center gap-2">
+          <span className="text-xs font-bold text-black uppercase tracking-wider">
+            Alert Sent To:
+          </span>
 
-        {ngo ? (
-          <div className="flex items-center gap-2 px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-700 text-sm font-semibold animate-fade-in">
-            <Building2 size={14} />{" "}
-            {/* Ensure Building2 is imported from lucide-react */}
-            <span>{ngo.name}</span>
-          </div>
-        ) : (
-          // Skeleton Loader while searching for NGO
-          <div className="h-6 w-32 bg-slate-100 rounded-full animate-pulse" />
-        )}
-      </div>
+          {ngo ? (
+            <div className="flex items-center gap-2 px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-700 text-sm font-semibold animate-fade-in">
+              <Building2 size={14} />{" "}
+              {/* Ensure Building2 is imported from lucide-react */}
+              <span>{ngo.name}</span>
+            </div>
+          ) : (
+            // Skeleton Loader while searching for NGO
+            <div className="h-6 w-32 bg-slate-100 rounded-full animate-pulse" />
+          )}
+        </div>
+      )}
       {/* Content Container */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-8">
         {/* --- HEADER SECTION --- */}
@@ -190,7 +230,7 @@ const ReportPage = () => {
               <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
                 {reportData.locationName}
               </h1>
-              {reportData.result !== "Pending" && (
+              {reportData.alertSent && (
                 <span
                   className={`px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase ${getStatusStyles(reportData.status, reportData.result)}`}
                 >
@@ -236,6 +276,7 @@ const ReportPage = () => {
             <div className="group relative overflow-hidden rounded-2xl shadow-sm border border-slate-200 bg-white">
               <div className="aspect-video w-full overflow-hidden bg-slate-100">
                 <img
+                  onLoad={handleImgLoad}
                   src={reportData.before_image}
                   alt="Before Landscape"
                   className="w-full h-full bg-slate-900 object-contain transition-transform duration-500 group-hover:scale-105"
@@ -253,6 +294,7 @@ const ReportPage = () => {
             <div className="group relative overflow-hidden rounded-2xl shadow-sm border border-slate-200 bg-white">
               <div className="aspect-video w-full overflow-hidden bg-slate-100">
                 <img
+                  onLoad={handleImgLoad}
                   src={reportData.after_image}
                   alt="After Landscape"
                   className="w-full h-full bg-slate-900 object-contain transition-transform duration-500 group-hover:scale-105"
@@ -270,6 +312,7 @@ const ReportPage = () => {
             <div className="group relative overflow-hidden rounded-2xl shadow-md border-2 border-red-100 bg-white ring-4 ring-red-50/50">
               <div className="aspect-video w-full overflow-hidden bg-slate-100 relative">
                 <img
+                 onLoad={handleImgLoad}
                   src={reportData.ndvi_diff_image}
                   alt="Vegetation Loss Heatmap"
                   className="w-full h-full bg-slate-900 object-contain transition-transform duration-500 group-hover:scale-105"

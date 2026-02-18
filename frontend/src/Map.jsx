@@ -128,7 +128,7 @@ function Map() {
   };
 
   const handleSeeReport = () => {
-    navigate(`/report/${reportId}`);
+    navigate(`/reports/${reportId}`);
   };
 
   return (
@@ -266,7 +266,7 @@ function Map() {
         {/* Actions (With Breathing Space) */}
         {(area || completed) && (
           <div className="mt-16 flex flex-col sm:flex-row gap-6 justify-center items-center">
-            {area && (
+            {area && !completed && (
               <button
                 onClick={getGeeData}
                 className="px-8 py-4 bg-linear-to-r from-emerald-600 to-teal-600 text-white rounded-xl font-bold text-lg shadow-xl shadow-emerald-200/50 hover:shadow-emerald-300/60 hover:-translate-y-1 transition-all"

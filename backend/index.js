@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
+
 import { analyze } from "./controllers/analyzeController.js";
 dotenv.config();
 import {
@@ -73,6 +74,32 @@ app.get("/reports/:id", requireAuth(), async (req, res) => {
     return res.status(500).json({
       message: "Server error while fetching report!",
     });
+  }
+});
+// GET /my-reports - Fetch all reports for the logged-in user
+app.get("/my-reports", requireAuth(), async (req, res) => {
+  try {
+    const { userId } = getAuth(req); // Get Clerk ID (e.g., user_2b...)
+
+    // 1. Find the MongoDB User ID associated with the Clerk ID
+    const user = await UserModel.findOne({ clerkId: userId });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found in database" });
+    }
+
+    // 2. Find reports where the 'userId' matches this user's MongoDB _id
+    // .sort({ createdAt: -1 }) ensures the newest reports appear first
+    const reports = await ReportModel.find({ userId: user._id })
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      reports,
+    });
+  } catch (error) {
+    console.error("Error fetching my reports:", error);
+    res.status(500).json({ message: "Server error fetching reports" });
   }
 });
 app.patch("/reports/:id", requireAuth(), async (req, res) => {
@@ -165,7 +192,11 @@ app.post("/users/save-user", requireAuth(), async (req, res) => {
 app.post("/ngo/register",async (req,res)=>{
   try {
     const { name, email, center_point } = req.body;
-
+     const {userId} = getAuth(req);
+     const user = await UserModel.findOne({clerkId:userId});
+     if (user.role !== "NGO_MANAGER") {
+    return res.status(403).json({ message: "Only NGO Managers can register an NGO" });
+  }
     // 1. Validation: Ensure all fields exist
     if (!name || !email || !center_point || !center_point.coordinates) {
       return res.status(400).json({ 
@@ -185,6 +216,7 @@ app.post("/ngo/register",async (req,res)=>{
 
     // 3. Create the new NGO
     const newNGO = await NGOModel.create({
+      userId: user._id,
       name,
       email,
       center_point: {

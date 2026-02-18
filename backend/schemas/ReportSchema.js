@@ -6,6 +6,7 @@ const ReportSchema = new Schema({
   userId: {
     type: Schema.Types.ObjectId,
     ref: "User",
+    required:true
   },
   center_point: {
     // GeoJSON structure requires a 'type' field
@@ -31,7 +32,7 @@ const ReportSchema = new Schema({
     default: "PENDING",
     enum: ["RESOLVED", "PENDING", "VERIFIED"],
   },
-  NGOId: {
+  ngoId: {
     type: Schema.Types.ObjectId,
     ref: "NGO",
   },
@@ -98,6 +99,11 @@ const ReportSchema = new Schema({
   result: {
     type: String,
     default: "Pending"
+  },
+  alertSent : {
+    type:Boolean,
+    default:false,
+    required:true
   }
 },{
     timestamps: true,

@@ -1,8 +1,9 @@
 import ee from "@google/earthengine";
 import { saveToCloudinary } from "../utils/uploadUtil.js";
 import dotenv from "dotenv";
+import UserModel from "../models/UserModel.js";
 import ReportModel from "../models/ReportModel.js";
-
+import { getAuth } from '@clerk/express'
 dotenv.config();
 
 // --- Core Index Calculation Functions ---
@@ -189,7 +190,9 @@ const calculateAreaMetrics = (
 // --- 3. Main Logic ---
 
 export const analyze = async (req, res) => {
+  const {userId} = getAuth(req);
   let start = Date.now();
+  const user = await UserModel.findOne({clerkId : userId});
   try {
     const { bounds, dates, locationName } = req.body;
     console.log(locationName);
@@ -376,6 +379,7 @@ export const analyze = async (req, res) => {
     const centerLng = (bounds._southWest.lng + bounds._northEast.lng) / 2;
 
     const newReport = await ReportModel.create({
+      userId:user._id,
       center_point: {
         type: "Point",
         coordinates: [centerLng, centerLat],

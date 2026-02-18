@@ -17,10 +17,6 @@ const UserSchema = new Schema({
     required:true,
     unique:true
    },
-   ngoId: {
-        type: Schema.Types.ObjectId,
-        ref: "NGO",
-    },
     role: {
         type: String,
         required: true,

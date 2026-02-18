@@ -1,14 +1,15 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useUser, SignedIn, UserButton } from "@clerk/clerk-react";
-import { HashLink } from 'react-router-hash-link';
+import { HashLink } from "react-router-hash-link";
 function Navbar() {
   const navigate = useNavigate();
   const { isSignedIn, user } = useUser();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleGetStarted = () => {
-    window.scrollTo(0,0);
+    window.scrollTo(0, 0);
     if (isSignedIn) {
       if (user.publicMetadata?.role === "STANDARD_USER") {
         navigate("/app");
@@ -37,39 +38,51 @@ function Navbar() {
             id="top"
           >
             <span className="text-2xl">🌳</span>
-            <HashLink smooth to={"/#top"} onClick={()=>window.scrollTo(0,0)} className="font-bold text-xl bg-linear-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+            <HashLink
+              smooth
+              to={"/#top"}
+              onClick={() => window.scrollTo(0, 0)}
+              className="font-bold text-xl bg-linear-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent"
+            >
               TreeTrace
             </HashLink>
           </div>
 
-              <div className="hidden md:flex! items-center gap-8 ">
-                {navLinks.map((link) => (
-                  <HashLink
-                    key={link.name}
-                    smooth
-                    to={`/#${link.id}`}
-                    className="text-sm font-semibold text-slate-800 hover:text-emerald-600 transition-colors"
-                  >
-                    {link.name}
-                  </HashLink>
-                ))}
-              </div>
+          <div className="hidden md:flex! items-center gap-8 ">
+            {navLinks.map((link) => (
+              <HashLink
+                key={link.name}
+                smooth
+                to={`/#${link.id}`}
+                className="text-sm font-semibold text-slate-800 hover:text-emerald-600 transition-colors"
+              >
+                {link.name}
+              </HashLink>
+            ))}
+          </div>
 
-              <div className="hidden md:flex! items-center gap-4 ">
-                <button
-                  onClick={handleGetStarted}
-                  className="px-5 py-2 bg-slate-900 text-white text-sm font-semibold rounded-lg hover:bg-slate-800 transition-colors shadow-md"
-                >
-                  {isSignedIn ? "Dashboard" : "Sign In"}
-                </button>
+          <div className="hidden md:flex! items-center gap-4 ">
+            <button
+              onClick={handleGetStarted}
+              className="px-5 py-2 bg-slate-900 text-white text-sm font-semibold rounded-lg hover:bg-slate-800 transition-colors shadow-md"
+            >
+              {isSignedIn ? "Dashboard" : "Sign In"}
+            </button>
 
-                <SignedIn>
-                  <div className="flex items-center justify-center bg-slate-100 rounded-full p-1 border border-slate-200">
-                    <UserButton />
-                  </div>
-                </SignedIn>
+            {isSignedIn && user.publicMetadata?.role === "STANDARD_USER" && (
+              <Link
+                to="/my-reports"
+                className="px-5 py-2 bg-slate-900 text-white text-sm font-semibold rounded-lg hover:bg-slate-800 transition-colors shadow-md"
+              >
+                My Reports
+              </Link>
+            )}
+            <SignedIn>
+              <div className="flex items-center justify-center bg-slate-100 rounded-full p-1 border border-slate-200">
+                <UserButton />
               </div>
-  
+            </SignedIn>
+          </div>
 
           {/* Mobile Menu Button (Hamburger) - Only visible on SMALL screens */}
           <div className="md:hidden flex items-center gap-4">
@@ -130,7 +143,6 @@ function Navbar() {
                 smooth
                 to={`/#${link.id}`}
                 onClick={() => {
-
                   setIsMobileMenuOpen(false); // Close menu after click
                 }}
                 className="block w-full text-left px-4 py-3 text-base font-semibold text-slate-700 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
@@ -139,16 +151,25 @@ function Navbar() {
               </HashLink>
             ))}
 
-            <div className="pt-4 border-t border-slate-100 mt-2">
+            <div className="flex-col justify-center  pt-4 border-t border-slate-100 mt-2">
               <button
                 onClick={() => {
                   handleGetStarted();
                   setIsMobileMenuOpen(false);
                 }}
-                className="w-full text-center px-5 py-3 bg-slate-900 text-white text-base font-bold rounded-xl hover:bg-slate-800 transition-all shadow-lg"
+                className="w-full text-center px-5 py-3 mb-5 bg-slate-900 text-white text-base font-bold rounded-xl hover:bg-slate-800 transition-all shadow-lg"
               >
                 {isSignedIn ? "Go to Dashboard" : "Sign In"}
               </button>
+             
+              {isSignedIn && user.publicMetadata?.role === "STANDARD_USER" && (
+              <Link
+                to="/my-reports"
+                className="block w-full text-center px-5 py-3 mb-5 bg-slate-900 text-white text-base font-bold rounded-xl hover:bg-slate-800 transition-all shadow-lg"
+              >
+                My Reports
+              </Link>
+            )}
             </div>
           </div>
         </div>

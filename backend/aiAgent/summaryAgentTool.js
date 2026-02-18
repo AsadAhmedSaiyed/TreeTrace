@@ -11,7 +11,7 @@ const summaryAgentTool = tool({
       .object({
         locationName: z
           .string()
-          .describe("Name of area."),
+          .describe("Name of area."),  
         beforeDate: z
           .string()
           .describe("The starting date for the change analysis."),

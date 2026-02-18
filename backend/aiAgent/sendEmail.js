@@ -14,9 +14,10 @@ const sendEmail = async ({email,subject,body}) => {
     html: `<div>${body}</div>`,
   });
 
-  if (error) {
-    return console.error({ error });
-  }
+ if (error) {
+      console.error("❌ Resend API returned an error:", error);
+      return { status: "error", message: error.message }; 
+    }
 
   console.log({ data });
   return {status:"success", message: "Email sent"};

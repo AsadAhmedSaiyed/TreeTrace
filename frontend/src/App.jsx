@@ -13,6 +13,7 @@ import LandingPage from "./pages/LandingPage.jsx";
 import Navbar from "./components/Navbar.jsx";
 import Footer from "./components/Footer.jsx";
 import NGOFormPage from "./pages/NGOFormPage.jsx";
+import MyReportsPage from "./pages/MyReportsPage.jsx";
 function App() {
   return (
     <BrowserRouter>
@@ -81,7 +82,7 @@ function App() {
         />
 
         <Route
-          path="/report/:id"
+          path="/reports/:id"
           element={
             <>
               <SignedIn>
@@ -129,6 +130,7 @@ function App() {
             </div>
           }
         />
+        <Route path="/my-reports" element={<MyReportsPage></MyReportsPage>}></Route>
       </Routes>
       <Footer></Footer>
     </BrowserRouter>
