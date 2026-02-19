@@ -24,6 +24,17 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+        cache-dependency-path: './backend/package-lock.json'
+    - name: Install dependencies
+      # 'npm ci' is faster and more secure for CI/CD
+      run: npm ci
+      working-directory: ./backend
+
+    - name: Run build (if exists)
+      run: npm run build --if-present
+      working-directory: ./backend
+
+    - name: Run tests
+      # Using the --forceExit flag we discussed to ensure the runner finishes
+      run: npm test -- --forceExit
+      working-directory: ./backend    
