@@ -38,3 +38,7 @@ jobs:
       # Using the --forceExit flag we discussed to ensure the runner finishes
       run: npm test -- --forceExit
       working-directory: ./backend    
+      env:
+        # This maps the GitHub Secret to the process.env variable
+        RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
