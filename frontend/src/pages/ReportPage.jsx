@@ -68,6 +68,7 @@ const ReportPage = () => {
             },
           },
         );
+        console.log(response.data.report);
         setReportData(response.data.report);
       } catch (e) {
         console.error("Error fetching report : ", e);
@@ -103,7 +104,7 @@ const ReportPage = () => {
   }, [reportData]);
 
   if (show || !reportData) {
-    return <ReportPageLoader />;
+    return <ReportPageLoader text={"Loading report analysis..."} />;
   }
   const handleTrigger = async () => {
     if (isGenerating) return; // Prevent double clicks
@@ -128,9 +129,12 @@ const ReportPage = () => {
         response.data.result.result ===
         "ANALYSIS COMPLETE: Loss detected. Alerting NGO in background."
       ) {
+        console.log("updating");
+        console.log(ngo.userId);
         setReportData((prev) => ({
           ...prev,
           alertSent: true,
+          ngoMgrId : ngo.userId,
           result: response.data.result.result,
           summary: response.data.result.generatedSummary,
         }));
@@ -141,6 +145,7 @@ const ReportPage = () => {
               result: response.data.result.result,
               summary: response.data.result.generatedSummary,
               alertSent: true,
+              ngoMgrId: ngo.userId,
             },
           },
           {
@@ -149,7 +154,7 @@ const ReportPage = () => {
             },
           },
         );
-        console.log(res.data);
+        console.log("updated : ",res.data);
       } else {
         setReportData((prev) => ({
           ...prev,
@@ -196,7 +201,7 @@ const ReportPage = () => {
   return (
     <div className="relative mt-17 mb-10 min-h-screen overflow-hidden bg-slate-50/50 font-sans text-slate-900">
       {/* Animated Blobs */}
-      {loadingImg && <ReportPageLoader></ReportPageLoader>}
+      {loadingImg && <ReportPageLoader text={"Loading Images..."} ></ReportPageLoader>}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-emerald-200/40 rounded-full mix-blend-multiply filter blur-3xl animate-blob" />
         <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-teal-200/40 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000" />
@@ -545,7 +550,7 @@ const ReportPage = () => {
         </section>
 
         {/* --- ACTION BUTTON --- */}
-        {reportData.summary === "Pending" && (
+        {(reportData.summary === "Pending" || !reportData.summary ) && (
           <SummaryLoader isLoading={isGenerating} onClick={handleTrigger} />
         )}
       </div>

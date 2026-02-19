@@ -2,13 +2,13 @@ import { HashLink } from "react-router-hash-link";
 import { useUser } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
 function Hero() {
-     const navigate = useNavigate();
+  const navigate = useNavigate();
   const { isSignedIn, user } = useUser();
-    const handleGetStarted = () => {
-      window.scrollTo(0,0);
+  const handleGetStarted = () => {
+    window.scrollTo(0, 0);
     if (isSignedIn) {
       if (user.publicMetadata?.role == "STANDARD_USER") {
-        navigate("/app");
+        navigate("/analyse");
       } else {
         navigate("/ngo/dashboard");
       }
@@ -55,9 +55,9 @@ function Hero() {
                   Get Started
                 </button>
 
-                <HashLink 
-                 smooth
-                 to={"/#how-it-works"}
+                <HashLink
+                  smooth
+                  to={"/#how-it-works"}
                   className="px-8 py-4 bg-white text-slate-700 rounded-xl font-semibold text-lg shadow-sm border border-slate-200 hover:border-emerald-300 transition-colors"
                 >
                   Learn More

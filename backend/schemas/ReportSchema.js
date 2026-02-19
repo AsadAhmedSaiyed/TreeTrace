@@ -32,7 +32,7 @@ const ReportSchema = new Schema({
     default: "PENDING",
     enum: ["RESOLVED", "PENDING", "VERIFIED"],
   },
-  ngoId: {
+  ngoMgrId: {
     type: Schema.Types.ObjectId,
     ref: "NGO",
   },

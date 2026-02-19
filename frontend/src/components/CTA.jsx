@@ -7,7 +7,7 @@ function CTA() {
     window.scrollTo(0,0);
     if (isSignedIn) {
       if (user.publicMetadata?.role == "STANDARD_USER") {
-        navigate("/app");
+        navigate("/analyse");
       } else {
         navigate("/ngo/dashboard");
       }

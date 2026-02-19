@@ -4,6 +4,7 @@ import axios from "axios";
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import { Building2, Mail, MapPin, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import "leaflet/dist/leaflet.css";
+import { useAuth } from "@clerk/clerk-react"; // <--- Add this
 
 // Fix for default Leaflet marker icons in React
 import L from "leaflet";
@@ -30,6 +31,7 @@ const LocationPicker = ({ setCoords }) => {
 };
 
 const NGOFormPage = () => {
+  const { getToken } = useAuth();
   const navigate = useNavigate();  
   const [formData, setFormData] = useState({ name: "", email: "" });
   const [coords, setCoords] = useState(null); // { lat, lng }
@@ -52,6 +54,7 @@ const NGOFormPage = () => {
     }
 
     try {
+      const token = await getToken();
       // Construct the payload matching your Mongoose Schema
       const payload = {
         name: formData.name,
@@ -62,7 +65,11 @@ const NGOFormPage = () => {
         },
       };
 
-     let res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/ngo/register`, payload);
+     let res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/ngo/register`, payload,{
+          headers: {
+            Authorization: `Bearer ${token}`, // <--- CRITICAL FIX
+          }
+        });
        navigate(`/ngo/${res.data.ngoId}`);
       setStatus("success");
       setFormData({ name: "", email: "" });

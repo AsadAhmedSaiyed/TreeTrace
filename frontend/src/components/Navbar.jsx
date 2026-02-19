@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import { useUser, SignedIn, UserButton } from "@clerk/clerk-react";
+import { useUser, useClerk, SignedIn, UserButton } from "@clerk/clerk-react";
 import { HashLink } from "react-router-hash-link";
 function Navbar() {
   const navigate = useNavigate();
@@ -11,11 +11,7 @@ function Navbar() {
   const handleGetStarted = () => {
     window.scrollTo(0, 0);
     if (isSignedIn) {
-      if (user.publicMetadata?.role === "STANDARD_USER") {
-        navigate("/app");
-      } else {
-        navigate("/ngo/dashboard");
-      }
+      navigate("/analyse");
     } else {
       navigate("/sign-in");
     }
@@ -37,7 +33,11 @@ function Navbar() {
             className="flex items-center gap-2 cursor-pointer shrink-0"
             id="top"
           >
-            <span className="text-2xl">🌳</span>
+            <img
+              src="/logo.png"
+              alt="TreeTrace Logo"
+              className="h-8 w-8 object-contain" // Adjust h-8 w-8 to change size
+            />
             <HashLink
               smooth
               to={"/#top"}
@@ -66,7 +66,7 @@ function Navbar() {
               onClick={handleGetStarted}
               className="px-5 py-2 bg-slate-900 text-white text-sm font-semibold rounded-lg hover:bg-slate-800 transition-colors shadow-md"
             >
-              {isSignedIn ? "Dashboard" : "Sign In"}
+              {isSignedIn ? "Analyse" : "Sign In"}
             </button>
 
             {isSignedIn && user.publicMetadata?.role === "STANDARD_USER" && (
@@ -77,6 +77,16 @@ function Navbar() {
                 My Reports
               </Link>
             )}
+
+            {isSignedIn && user.publicMetadata?.role === "NGO_MANAGER" && (
+              <Link
+                to="/ngo/dashboard"
+                className="px-5 py-2 bg-slate-900 text-white text-sm font-semibold rounded-lg hover:bg-slate-800 transition-colors shadow-md"
+              >
+                Dashboard
+              </Link>
+            )}
+
             <SignedIn>
               <div className="flex items-center justify-center bg-slate-100 rounded-full p-1 border border-slate-200">
                 <UserButton />
@@ -159,17 +169,25 @@ function Navbar() {
                 }}
                 className="w-full text-center px-5 py-3 mb-5 bg-slate-900 text-white text-base font-bold rounded-xl hover:bg-slate-800 transition-all shadow-lg"
               >
-                {isSignedIn ? "Go to Dashboard" : "Sign In"}
+                {isSignedIn ? "Analyse" : "Sign In"}
               </button>
-             
+
               {isSignedIn && user.publicMetadata?.role === "STANDARD_USER" && (
-              <Link
-                to="/my-reports"
-                className="block w-full text-center px-5 py-3 mb-5 bg-slate-900 text-white text-base font-bold rounded-xl hover:bg-slate-800 transition-all shadow-lg"
-              >
-                My Reports
-              </Link>
-            )}
+                <Link
+                  to="/my-reports"
+                  className="block w-full text-center px-5 py-3 mb-5 bg-slate-900 text-white text-base font-bold rounded-xl hover:bg-slate-800 transition-all shadow-lg"
+                >
+                  My Reports
+                </Link>
+              )}
+              {isSignedIn && user.publicMetadata?.role === "NGO_MANAGER" && (
+                <Link
+                  to="/ngo/dashboard"
+                  className="px-5 py-2 bg-slate-900 text-white text-sm font-semibold rounded-lg hover:bg-slate-800 transition-colors shadow-md"
+                >
+                  Dashboard
+                </Link>
+              )}
             </div>
           </div>
         </div>

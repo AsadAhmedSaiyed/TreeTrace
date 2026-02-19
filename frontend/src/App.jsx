@@ -1,6 +1,6 @@
 import "./App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Map from "./Map.jsx";
+import Analyse from "./Analyse.jsx";
 import { SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
 import ReportPage from "./pages/ReportPage.jsx";
 import SignInPage from "./pages/SignInPage.jsx";
@@ -66,12 +66,12 @@ function App() {
         <Route path="/" element={<LandingPage></LandingPage>}></Route>
         {/* User Routes */}
         <Route
-          path="/app"
+          path="/analyse"
           element={
             <>
               <SignedIn>
                 <CheckUserRole>
-                  <Map />
+                  <Analyse />
                 </CheckUserRole>
               </SignedIn>
               <SignedOut>
@@ -130,7 +130,10 @@ function App() {
             </div>
           }
         />
-        <Route path="/my-reports" element={<MyReportsPage></MyReportsPage>}></Route>
+        <Route
+          path="/my-reports"
+          element={<MyReportsPage></MyReportsPage>}
+        ></Route>
       </Routes>
       <Footer></Footer>
     </BrowserRouter>

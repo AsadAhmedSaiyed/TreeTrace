@@ -26,7 +26,7 @@ function RecenterMap({ coords }) {
   return null;
 }
 
-function Map() {
+function Analyse() {
   let [loading, setLoading] = useState(false);
   const { getToken } = useAuth();
   let [reportId, setReportId] = useState(null);
@@ -48,15 +48,15 @@ function Map() {
     console.log("Selected area : ", newArea);
     setArea(newArea);
   };
- const getCoordinates = async (address) => {
+  const getCoordinates = async (address) => {
     try {
       // 🟢 FIX: We switched from Nominatim to Open-Meteo here
       const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
-        data.city
+        data.city,
       )}&count=1&language=en&format=json`;
 
       const response = await axios.get(url);
-      
+
       // Open-Meteo returns data in a 'results' array
       if (response.data.results && response.data.results.length > 0) {
         return {
@@ -152,8 +152,8 @@ function Map() {
             Define Your Analysis Zone
           </h2>
           <p className="mt-2 text-slate-500 text-lg">
-            Enter the location details below to pinpoint the area you
-            want to monitor.
+            Enter the location details below to pinpoint the area you want to
+            monitor.
           </p>
         </div>
 
@@ -290,4 +290,4 @@ function Map() {
   );
 }
 
-export default Map;
+export default Analyse;

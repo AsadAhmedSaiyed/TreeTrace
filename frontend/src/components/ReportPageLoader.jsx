@@ -1,7 +1,7 @@
 
 import { Loader2 } from "lucide-react";
 
-const ReportPageLoader = () => {
+const ReportPageLoader = ({text}) => {
   return (
     <div className="fixed inset-0 z-50 min-h-screen bg-slate-50 flex flex-col items-center justify-center overflow-hidden">
       {/* Background Blobs */}
@@ -12,7 +12,7 @@ const ReportPageLoader = () => {
         {/* Spinning Loader */}
         <Loader2 className="w-12 h-12 text-emerald-600 animate-spin" />
         <p className="text-slate-500 font-medium animate-pulse">
-          Loading Report Analysis...
+          {text}
         </p>
       </div>
     </div>

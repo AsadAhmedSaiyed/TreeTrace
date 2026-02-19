@@ -79,6 +79,7 @@ const getRegionStats = (image, geometry, reducer, scale) => {
         geometry: geometry,
         scale: scale,
         maxPixels: 1e13,
+        tileScale: 16,
       })
       .evaluate((data, err) => {
         if (err) reject(err);
@@ -118,46 +119,45 @@ function maskS2clouds(image) {
 const getHistoricalStats = async (geometry, dates) => {
   // 1. Define the historical time window
   const beforeDate = ee.Date(dates.before);
-  const endYear = beforeDate.get("year").getInfo(); // Get the year of your "Before" image (e.g., 2025)
-  const startYear = endYear - 2; // Start 5 years prior (e.g., 2020)
 
-  // Use the .get('month') to retrieve the month number (1-12)
-  const startMonthNum = beforeDate.get("month").getInfo(); // Get the month number as a JS value
+  // --- FIX START: Use evaluate() instead of getInfo() ---
+  // We fetch the year and month asynchronously to prevent server timeouts
+  const [endYear, startMonthNum] = await Promise.all([
+    evaluate(beforeDate.get("year")),
+    evaluate(beforeDate.get("month"))
+  ]);
+  // --- FIX END ---
+
+  const startYear = endYear - 2; // Start 2 years prior
 
   // 2. Filter the historical satellite collection (Sentinel-2)
   const historicalCollection = ee
     .ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
-    .filter(ee.Filter.calendarRange(startYear, endYear, "year")) // Filter to the 5-year range
-    .filter(ee.Filter.calendarRange(startMonthNum, startMonthNum, "month")) // Filter to the exact same season/month
-    .filterBounds(geometry) // Only images that cover the user's area
-    .map(maskS2clouds) // Apply your existing cloud mask to clean every historical image
-    .map(calcEVI); // Apply the EVI calculation to every image
+    .filter(ee.Filter.calendarRange(startYear, endYear, "year")) 
+    .filter(ee.Filter.calendarRange(startMonthNum, startMonthNum, "month")) 
+    .filterBounds(geometry) 
+    .map(maskS2clouds) 
+    .map(calcEVI); 
 
-  // 3. Calculate the mean (mu) and standard deviation (sigma) of the entire historical dataset
-
-  // mu: Calculates the average EVI across all images in the collection for every pixel.
+  // 3. Calculate the mean (mu) and standard deviation (sigma)
   const muImage = historicalCollection.mean().clip(geometry).rename("mu");
-
-  // sigma: Calculates the standard deviation of EVI across all images for every pixel.
+  
   const sigmaImage = historicalCollection
     .reduce(ee.Reducer.stdDev())
     .clip(geometry)
     .rename("sigma");
 
   console.log("getting historical data!");
-  // 4. Extract the regional mean statistics (as simple JavaScript numbers)
-  // We get the average value of 'mu' and 'sigma' across the whole geometry.
+
+  // 4. Extract the regional mean statistics
   const [muStats, sigmaStats] = await Promise.all([
-    getRegionStats(muImage, geometry, ee.Reducer.mean(), 100),
-    getRegionStats(sigmaImage, geometry, ee.Reducer.mean(), 100),
+    getRegionStats(muImage, geometry, ee.Reducer.mean(), 500),
+    getRegionStats(sigmaImage, geometry, ee.Reducer.mean(), 500),
   ]);
 
-  // 5. Return the image objects (for Z-Score) and the scalar values (for the report)
   return {
-    // Scalar values for the report
     mu: muStats.mu,
     sigma: sigmaStats.sigma,
-    // GEE Image objects (needed for math in Step 2)
     muImage: muImage,
     sigmaImage: sigmaImage,
   };

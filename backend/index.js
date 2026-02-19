@@ -20,6 +20,7 @@ const PORT = process.env.PORT || 5000;
 import ee from "@google/earthengine";
 import fs from "fs";
 import ReportModel from "./models/ReportModel.js";
+
 const keyFile = process.env.GEE_KEY_PATH;
 console.log("keyFile : ", keyFile);
 let initialized = false;
@@ -65,6 +66,7 @@ app.get("/reports/:id", requireAuth(), async (req, res) => {
         message: "Report Not found!",
       });
     }
+    console.log("Report : ",report);
     return res.status(200).json({
       success: true,
       report,
@@ -76,27 +78,36 @@ app.get("/reports/:id", requireAuth(), async (req, res) => {
     });
   }
 });
+
 // GET /my-reports - Fetch all reports for the logged-in user
 app.get("/my-reports", requireAuth(), async (req, res) => {
   try {
     const { userId } = getAuth(req); // Get Clerk ID (e.g., user_2b...)
-
     // 1. Find the MongoDB User ID associated with the Clerk ID
     const user = await UserModel.findOne({ clerkId: userId });
-
     if (!user) {
       return res.status(404).json({ message: "User not found in database" });
     }
-
-    // 2. Find reports where the 'userId' matches this user's MongoDB _id
-    // .sort({ createdAt: -1 }) ensures the newest reports appear first
-    const reports = await ReportModel.find({ userId: user._id })
-      .sort({ createdAt: -1 });
-
-    res.status(200).json({
-      success: true,
-      reports,
-    });
+    console.log(user.role);
+    if (user.role === "STANDARD_USER") {
+      const reports = await ReportModel.find({ userId: user._id }).sort({
+        createdAt: -1,
+      });
+      console.log(reports);
+      res.status(200).json({
+        success: true,
+        reports,
+      });
+    } else {
+      const reports = await ReportModel.find({ ngoMgrId: user._id }).sort({
+        createdAt: -1,
+      });
+      console.log(reports);
+      res.status(200).json({
+        success: true,
+        reports,
+      });
+    }
   } catch (error) {
     console.error("Error fetching my reports:", error);
     res.status(500).json({ message: "Server error fetching reports" });
@@ -106,16 +117,17 @@ app.patch("/reports/:id", requireAuth(), async (req, res) => {
   try {
     let { id } = req.params;
     const { updates } = req.body;
+    console.log("new fields : ",updates);
     const report = await ReportModel.findByIdAndUpdate(id, updates, {
       new: true,
       runValidators: true,
     });
-    console.log(report);
     if (!report) {
       return res.status(404).json({
         message: "Report Not found!",
       });
     }
+    console.log("Updated report : ",report);
     return res.status(200).json({
       success: true,
       report,
@@ -189,28 +201,32 @@ app.post("/users/save-user", requireAuth(), async (req, res) => {
   }
 });
 
-app.post("/ngo/register",async (req,res)=>{
+app.post("/ngo/register",requireAuth(), async (req, res) => {
   try {
     const { name, email, center_point } = req.body;
-     const {userId} = getAuth(req);
-     const user = await UserModel.findOne({clerkId:userId});
-     if (user.role !== "NGO_MANAGER") {
-    return res.status(403).json({ message: "Only NGO Managers can register an NGO" });
-  }
+    const { userId } = getAuth(req);
+    console.log("UserId : ",userId);
+    const user = await UserModel.findOne({ clerkId: userId });
+    console.log(user);
+    if (user.role !== "NGO_MANAGER") {
+      return res
+        .status(403)
+        .json({ message: "Only NGO Managers can register an NGO" });
+    }
     // 1. Validation: Ensure all fields exist
     if (!name || !email || !center_point || !center_point.coordinates) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Please provide name, email, and valid location coordinates." 
+      return res.status(400).json({
+        success: false,
+        message: "Please provide name, email, and valid location coordinates.",
       });
     }
 
     // 2. Check for Duplicates (Optional but recommended)
     const existingNGO = await NGOModel.findOne({ email });
     if (existingNGO) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "An NGO with this email is already registered." 
+      return res.status(400).json({
+        success: false,
+        message: "An NGO with this email is already registered.",
       });
     }
 
@@ -221,26 +237,63 @@ app.post("/ngo/register",async (req,res)=>{
       email,
       center_point: {
         type: "Point", // Force type to be 'Point'
-        coordinates: center_point.coordinates // [Lng, Lat]
-      }
+        coordinates: center_point.coordinates, // [Lng, Lat]
+      },
     });
-
+    console.log("New : ",newNGO);
     res.status(201).json({
       success: true,
       message: "NGO registered successfully!",
-      ngoId:newNGO._id, 
+      ngoId: newNGO._id,
     });
-
   } catch (error) {
     console.error("Registration Error:", error);
-  
-    res.status(500).json({ 
-      success: false, 
-      message: "Server Error. Could not register NGO." 
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error. Could not register NGO.",
     });
   }
 });
+app.get("/ngo-details", requireAuth(), async (req, res) => { // Added requireAuth() for safety
+  try {
+    const { userId } = getAuth(req);
+    
+    // 1. Safety Check: User might not exist in DB yet
+    const user = await UserModel.findOne({ clerkId: userId });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
 
+    // 2. Role Check
+    if (user.role !== "NGO_MANAGER") {
+      return res
+        .status(403)
+        .json({ success: false, message: "Access denied: Not an NGO Manager" });
+    }
+   console.log("User : ",user.email);
+    // 3. Find NGO (Handle case where NGO profile is missing)
+    const ngo = await NGOModel.findOne({ email: user.email });
+      console.log("NGO :", ngo);
+    if (!ngo) {
+      return res.status(404).json({ success: false, message: "NGO profile not found" });
+    }
+
+    // 4. Success Response (Use 200 OK)
+    res.status(200).json({
+      success: true,
+      message: "NGO details fetched successfully", // Fixed message
+      loc: ngo.center_point,
+    });
+
+  } catch (error) {
+    console.error("Failed to fetch NGO details:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server Error. Could not fetch NGO details.", // Fixed message
+    });
+  }
+});
 app.get("/ngo/nearest", async (req, res) => {
   try {
     const { lat, lng } = req.query;
@@ -259,8 +312,8 @@ app.get("/ngo/nearest", async (req, res) => {
           },
         },
       },
-    }).select("email name");
-
+    });
+    console.log(nearestNGO);
     if (!nearestNGO) {
       return res.status(404).json({ message: "No NGO found nearby." });
     }

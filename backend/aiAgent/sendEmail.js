@@ -8,7 +8,7 @@ const sendEmail = async ({email,subject,body}) => {
   console.log("Sending email...");
   try{
     const { data, error } = await resend.emails.send({
-    from: "TreeTrace <onboarding@resend.dev>",
+    from: "TreeTrace <notifications@treetrace.tech>",
     to: [email],
     subject: subject,
     html: `<div>${body}</div>`,
