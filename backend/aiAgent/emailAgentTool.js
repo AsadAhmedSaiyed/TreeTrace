@@ -1,4 +1,4 @@
-import { tool, generateText } from "ai";
+import { tool } from "ai";
 import { z } from "zod";
 import sendEmail from "./sendEmail.js";
 import generateEmailContent from "./generateEmailContent.js";

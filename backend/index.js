@@ -18,16 +18,12 @@ const url = process.env.MONGO_URI;
 const app = express();
 const PORT = process.env.PORT || 5000;
 import ee from "@google/earthengine";
-import fs from "fs";
 import ReportModel from "./models/ReportModel.js";
-
-const keyFile = process.env.GEE_KEY_PATH;
-console.log("keyFile : ", keyFile);
 let initialized = false;
 
 async function initGEE() {
   if (!initialized) {
-    const privateKeyData = JSON.parse(fs.readFileSync(keyFile, "utf8"));
+    const privateKeyData = JSON.parse(process.env.GEE_JSON_CONTENT);
     await new Promise((resolve, reject) => {
       ee.data.authenticateViaPrivateKey(
         privateKeyData,
