@@ -1,7 +1,4 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
-
-name: Node.js CI
+name: TreeTrace Backend CI/CD
 
 on:
   push:
@@ -10,30 +7,39 @@ on:
       - 'backend/**'
 
 jobs:
-  build:
-
-    runs-on: self-hosted
-    strategy:
-      matrix:
-        node-version: [22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+  build-and-deploy:
+    runs-on: ubuntu-latest # Secure, cloud-hosted runner
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout Code
+      uses: actions/checkout@v4
     
-    - name: Use Node.js ${{ matrix.node-version }}
+    - name: Use Node.js 22.x
       uses: actions/setup-node@v4
       with:
-        node-version: ${{ matrix.node-version }}
+        node-version: 22
         cache: 'npm'
         cache-dependency-path: backend/package-lock.json
         
     - name: Install Dependencies
       run: |
         cd backend
-        npm ci # Faster and more reliable for CI
+        npm ci
+
+    - name: Run Unit Tests
+      run: |
+        cd backend
+        npm test
 
     - name: Run Build
       run: |
         cd backend
         npm run build --if-present
+
+    - name: Deploy to Azure Web App
+      if: success() # Security: Only deploys if 'Run Unit Tests' passed
+      uses: azure/webapps-deploy@v3
+      with:
+        app-name: 'treetrace-api'
+        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        package: ./backend  
