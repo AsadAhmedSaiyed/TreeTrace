@@ -24,6 +24,7 @@ let initialized = false;
 async function initGEE() {
   if (!initialized) {
     const privateKeyData = JSON.parse(process.env.GEE_JSON_CONTENT);
+    console.log(privateKeyData);
     await new Promise((resolve, reject) => {
       ee.data.authenticateViaPrivateKey(
         privateKeyData,
@@ -32,7 +33,7 @@ async function initGEE() {
             null,
             null,
             () => {
-              initialized = true;
+              initialized = true
               console.log("GEE initialized");
               resolve();
             },
