@@ -1,3 +1,5 @@
+//  docker build -t asad313/treetrace-backend .
+//docker push  asad313/treetrace-backend
 import express from "express";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
@@ -24,7 +26,6 @@ let initialized = false;
 async function initGEE() {
   if (!initialized) {
     const privateKeyData = JSON.parse(process.env.GEE_JSON_CONTENT);
-    console.log(privateKeyData);
     await new Promise((resolve, reject) => {
       ee.data.authenticateViaPrivateKey(
         privateKeyData,

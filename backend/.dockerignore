@@ -1,0 +1,9 @@
+node_modules
+npm-debug.log
+.env
+.git
+.gitignore
+tests
+jest.config.js
+*.md
+nth-computing-476904-a2-b43171e02097.json
