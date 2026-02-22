@@ -1,7 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
-
+import client from "prom-client"
 import { analyze } from "./controllers/analyzeController.js";
 dotenv.config();
 import {
@@ -54,6 +54,8 @@ app.use(
 );
 app.use(express.json());
 app.use(clerkMiddleware());
+const collectDefaultMetrics = client.collectDefaultMetrics;
+collectDefaultMetrics({timeout:5000})
 app.get("/reports/:id", requireAuth(), async (req, res) => {
   try {
     let { id } = req.params;
@@ -324,7 +326,10 @@ app.get("/ngo/nearest", async (req, res) => {
     res.status(500).json({ message: "Failed find nearest NGO" });
   }
 });
-
+app.get("/metrics",async (req,res)=>{
+   res.set("Content-Type",client.register.contentType);
+   res.end(await client.register.metrics());
+});
 // Add this before app.listen()
 app.get("/", (req, res) => {
   res.send("TreeTrace Backend is Running 🌳");
