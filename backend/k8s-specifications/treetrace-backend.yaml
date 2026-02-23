@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: treetrace-backend
+  labels:
+    app: treetrace-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: treetrace-backend
+  template:
+    metadata:
+      labels:
+        app: treetrace-backend
+    spec:
+      containers:
+      - name: treetrace-backend
+        image: asad313/treetrace-backend
+        ports:
+        - containerPort: 5000
+        env:
+        - name: GEE_JSON_CONTENT
+          valueFrom: 
+            secretKeyRef:
+              name: treetrace-backend-secret
+              key: gee-json-content
+        - name: RESEND_API_KEY
+          valueFrom: 
+            secretKeyRef:
+              name: treetrace-backend-secret
+              key: resend-api-key
+        - name: MONGO_URI
+          valueFrom: 
+            secretKeyRef:
+              name: treetrace-backend-secret
+              key: mongo-uri
+        - name: GOOGLE_GENERATIVE_AI_API_KEY
+          valueFrom: 
+            secretKeyRef:
+              name: treetrace-backend-secret
+              key: google-generative-ai-api-key 
+        - name: AI_GATEWAY_API_KEY
+          valueFrom: 
+            secretKeyRef:
+              name: treetrace-backend-secret
+              key: ai-gateway-api-key
+        - name: CLOUDINARY_CLOUD_NAME
+          valueFrom: 
+            secretKeyRef:
+              name: treetrace-backend-secret
+              key: cloudinary-cloud-name
+        - name: CLOUDINARY_API_KEY
+          valueFrom: 
+            secretKeyRef:
+              name: treetrace-backend-secret
+              key: cloudinary-api-key
+        - name: CLOUDINARY_API_SECRET
+          valueFrom: 
+            secretKeyRef:
+              name: treetrace-backend-secret
+              key: cloudinary-api-secret 
+        - name: CLERK_PUBLISHABLE_KEY
+          valueFrom: 
+            secretKeyRef:
+              name: treetrace-backend-secret
+              key: clerk-publishable-key
+        - name: CLERK_SECRET_KEY
+          valueFrom: 
+            secretKeyRef:
+              name: treetrace-backend-secret
+              key: clerk-secret-key                               
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: treetrace-backend-service
+spec:
+  selector:
+    app: treetrace-backend
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 5000

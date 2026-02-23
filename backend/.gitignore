@@ -1,3 +1,4 @@
 .env
 node_modules/
 nth-computing-476904-a2-b43171e02097.json
+k8s-specifications/treetrace-backend-secret.yaml

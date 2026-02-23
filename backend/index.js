@@ -49,7 +49,7 @@ async function initGEE() {
 
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: ["http://localhost:5173","https://treetrace.tech"],
     credentials: true,
   }),
 );

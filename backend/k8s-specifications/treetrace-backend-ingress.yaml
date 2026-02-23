@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: treetrace-backend-ingress
+spec:
+  ingressClassName: nginx # req in new k8 versions
+  rules:
+  - host: treetrace.tech
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: treetrace-backend-service
+            port:
+              number: 80
