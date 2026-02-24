@@ -5,7 +5,7 @@ metadata:
 spec:
   ingressClassName: nginx # req in new k8 versions
   rules:
-  - host: treetrace.tech
+  - host: api.treetrace.tech
     http:
       paths:
       - path: /
