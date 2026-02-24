@@ -17,6 +17,7 @@ spec:
       containers:
       - name: treetrace-backend
         image: asad313/treetrace-backend
+        imagePullPolicy: Always
         ports:
         - containerPort: 5000
         env:

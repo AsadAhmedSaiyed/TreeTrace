@@ -2,8 +2,17 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: treetrace-backend-ingress
+  annotations:
+    # This line tells cert-manager to jump into action!
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # This line forces anyone typing http to be redirected to https
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
-  ingressClassName: nginx # req in new k8 versions
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - api.treetrace.tech
+    secretName: treetrace-api-tls # cert-manager will save the certificate here
   rules:
   - host: api.treetrace.tech
     http:
