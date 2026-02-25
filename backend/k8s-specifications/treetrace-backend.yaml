@@ -25,52 +25,52 @@ spec:
           valueFrom: 
             secretKeyRef:
               name: treetrace-backend-secret
-              key: gee-json-content
+              key: GEE_JSON_CONTENT
         - name: RESEND_API_KEY
           valueFrom: 
             secretKeyRef:
               name: treetrace-backend-secret
-              key: resend-api-key
+              key: RESEND_API_KEY
         - name: MONGO_URI
           valueFrom: 
             secretKeyRef:
               name: treetrace-backend-secret
-              key: mongo-uri
+              key: MONGO_URI
         - name: OPENAI_API_KEY
           valueFrom: 
             secretKeyRef:
               name: treetrace-backend-secret
-              key: openai-api-key 
+              key: OPENAI_API_KEY 
         - name: AI_GATEWAY_API_KEY
           valueFrom: 
             secretKeyRef:
               name: treetrace-backend-secret
-              key: ai-gateway-api-key
+              key: AI_GATEWAY_API_KEY
         - name: CLOUDINARY_CLOUD_NAME
           valueFrom: 
             secretKeyRef:
               name: treetrace-backend-secret
-              key: cloudinary-cloud-name
+              key: CLOUDINARY_CLOUD_NAME
         - name: CLOUDINARY_API_KEY
           valueFrom: 
             secretKeyRef:
               name: treetrace-backend-secret
-              key: cloudinary-api-key
+              key: CLOUDINARY_API_KEY
         - name: CLOUDINARY_API_SECRET
           valueFrom: 
             secretKeyRef:
               name: treetrace-backend-secret
-              key: cloudinary-api-secret 
+              key: CLOUDINARY_API_SECRET 
         - name: CLERK_PUBLISHABLE_KEY
           valueFrom: 
             secretKeyRef:
               name: treetrace-backend-secret
-              key: clerk-publishable-key
+              key: CLERK_PUBLISHABLE_KEY
         - name: CLERK_SECRET_KEY
           valueFrom: 
             secretKeyRef:
               name: treetrace-backend-secret
-              key: clerk-secret-key                               
+              key: CLERK_SECRET_KEY                               
 
 ---
 apiVersion: v1
