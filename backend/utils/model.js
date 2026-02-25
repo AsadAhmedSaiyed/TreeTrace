@@ -4,7 +4,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 // OpenRouter uses the OpenAI-compatible format
 const openrouter = createOpenAI({
   baseURL: "https://openrouter.ai/api/v1",
-  apiKey: process.env.OPENROUTER_API_KEY, 
+  apiKey: process.env.OPENAI_API_KEY, 
 });
 
 // Using Gemini 2.0 Flash (Stable and supported via OpenRouter)
