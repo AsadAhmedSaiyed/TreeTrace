@@ -1,79 +1,90 @@
-import { generateText, APICallError } from "ai";
-import { model } from "../utils/model.js";
+import { generateText } from "ai";
+import { google } from "@ai-sdk/google";
 import summaryAgentTool from "./summaryAgentTool.js";
 import emailAgentTool from "./emailAgentTool.js";
+import { model } from "../utils/model.js";
+
+// 1. ANALYST AGENT: Only responsible for analyzing data
+const analystSystemPrompt = `
+You are an expert Data Analyst for TreeTrace. 
+Your ONLY job is to call the "summaryAgent" to analyze the report data.
+Return the raw findings. Do not make decisions.
+`;
+
+// 2. COMMUNICATIONS AGENT: Only responsible for writing/sending emails
+const commsSystemPrompt = `
+You are the Communications Officer. 
+Your ONLY job is to call the "emailAgent" to send an alert based on the summary provided.
+Use the summary to write a persuasive body text.
+`;
 
 const runMainAgent = async (reportData, ngoEmail) => {
   console.log("🚀 Orchestrator started...");
+  
+  // --- STEP 1: ANALYSIS PHASE ---
+  console.log("Phase 1: Analyzing Report...");
+  const analysisResponse = await generateText({
+    model,
+    system: analystSystemPrompt,
+    tools: { summaryAgent: summaryAgentTool },
+    maxSteps: 2, // It only needs 1 step to call the tool
+    prompt: `Analyze this report: ${JSON.stringify(reportData)}`,
+  });
 
-  try {
-    // --- STEP 1: ANALYSIS PHASE ---
-    console.log("Phase 1: Analyzing Report...");
-    
-    const analysisResponse = await generateText({
-      model,
-      system: analystSystemPrompt,
-      tools: { summaryAgent: summaryAgentTool },
-      maxSteps: 5, // Increased slightly to allow for model "self-correction" if tool fails
-      prompt: `Analyze this report: ${JSON.stringify(reportData)}`,
-    });
+  // Extract the structured data from the tool result
+  let lossDetected = false;
+  let generatedSummary = "";
+  let result = "";
 
-    // Check if the model actually called the tool
-    const summaryStep = analysisResponse.steps.find((step) =>
-      step.toolResults?.some((res) => res.toolName === "summaryAgent"),
-    );
+  // Helper to find tool results safely
+  const summaryStep = analysisResponse.steps.find((step) =>
+    step.toolResults?.some((res) => res.toolName === "summaryAgent"),
+  );
 
-    if (!summaryStep) {
-      throw new Error("The model finished without calling the Summary Tool.");
+  if (summaryStep) {
+    const toolOutput = summaryStep.toolResults[0].output;
+    lossDetected = toolOutput.loss_detected;
+    generatedSummary = toolOutput.summary;
+    result = "ALL CLEAR: No loss detected.";
+  } else {
+    result = "❌ Error: Analysis failed to run.";
+  }
+
+  // --- STEP 2: LOGIC GATE (The "Deterministic" Part) ---
+  if (!lossDetected) {
+    return {
+      result,
+      generatedSummary,
+    };
+  }
+
+  // --- STEP 3: ACTION PHASE ---
+  const sendEmailInBackground = async (generatedSummary, ngoEmail) => {
+    try {
+      await generateText({
+        model,
+        system: commsSystemPrompt,
+        tools: { emailAgent: emailAgentTool },
+        prompt: `Send alert to ${ngoEmail}. Context: ${generatedSummary}, Location name : ${reportData.locationName}`,
+      });
+      console.log("✅ Background Alert Sent.");
+    } catch (error) {
+      // Log the error to a service like Sentry or Datadog
+      console.error("❌ Background Alert Failed:", error.message);
     }
+  };
 
-    const toolResult = summaryStep.toolResults.find(r => r.toolName === "summaryAgent");
-    
-    // Check if the tool execution itself failed internally
-    if (!toolResult.success) {
-      console.error("Tool Execution Error:", toolResult.error);
-      return { result: "❌ Error: Summary Tool failed to execute logic.", error: toolResult.error };
-    }
-
-    const { loss_detected, summary } = toolResult.output;
-
-    // --- STEP 2: LOGIC GATE ---
-    if (!loss_detected) {
-      return { result: "ALL CLEAR: No loss detected.", generatedSummary: summary };
-    }
-
-    // --- STEP 3: ACTION PHASE ---
+  if (lossDetected) {
     console.log("Handoff to background worker...");
-    sendEmailInBackground(summary, ngoEmail, reportData.locationName);
+
+    // We call it without await, but the function HAS its own internal try/catch
+    sendEmailInBackground(generatedSummary, ngoEmail);
 
     return {
       result: "ANALYSIS COMPLETE: Loss detected. Alerting NGO in background.",
-      generatedSummary: summary,
+      generatedSummary,
     };
-
-  } catch (error) {
-    // --- SPECIAL HANDLING FOR "FORBIDDEN" (403) ---
-    if (APICallError.isInstance(error) && error.statusCode === 403) {
-      console.error("❌ Groq Forbidden: Check Model Permissions in Groq Console.");
-      return { result: "❌ Forbidden: The model deployment is restricted.", error: error.message };
-    }
-
-    console.error("❌ Orchestrator Error:", error.message);
-    return { result: "❌ Critical Failure", error: error.message };
   }
 };
 
-// Isolated background worker with its own handling
-const sendEmailInBackground = async (summary, ngoEmail, locationName) => {
-  try {
-    await generateText({
-      model,
-      system: commsSystemPrompt,
-      tools: { emailAgent: emailAgentTool },
-      prompt: `Send alert to ${ngoEmail}. Context: ${summary}, Location: ${locationName}`,
-    });
-    console.log("✅ Background Alert Sent.");
-  } catch (error) {
-    console.error("❌ Background Alert Failed:", error.message);
-  }
-};
+export default runMainAgent;
