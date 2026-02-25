@@ -1,8 +1,9 @@
+
 name: TreeTrace CI/CD
 
 on:
   push:
-    branches: [ "main" ] # Runs whenever you push to main
+    branches: [ "main" ]
 
 jobs:
   build-and-deploy:
@@ -18,10 +19,12 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 2. Build and Push (Overwrites 'latest' tag)
+      # 2. Build and Push (Context set to backend folder)
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
+          context: ./backend        
+          file: ./backend/Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/treetrace-backend:latest
 
@@ -35,8 +38,8 @@ jobs:
       - name: Set AKS Context
         uses: azure/aks-set-context@v4
         with:
-          resource-group: 'TreeTrace' # Replace with your RG
-          cluster-name: 'TreeTraceCluster'     # Replace with your AKS Name
+          resource-group: 'TreeTrace'
+          cluster-name: 'TreeTraceCluster'
 
       # 5. The "Magic" Step: Force Pods to Restart
       - name: Rollout Restart
