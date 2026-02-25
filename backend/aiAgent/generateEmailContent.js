@@ -1,11 +1,12 @@
 import { google } from "@ai-sdk/google"; 
 import { generateObject } from "ai";
 import {z} from "zod";
+import { model } from "../utils/model";
 const generateEmailContent = async ({ summary, locationName }) => {
 
     console.log("Generating email content...");
     console.log(locationName);
-    const model = google("gemini-2.5-flash");
+
   const systemPrompt = `
    You are a Senior Environmental Communications Specialist. 
    Task: Convert satellite telemetry and summaries into high-stakes, concise email alerts for an NGO.

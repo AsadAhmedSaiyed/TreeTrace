@@ -2,13 +2,12 @@ import { google } from "@ai-sdk/google";
 import { generateObject } from "ai";
 import { z } from "zod"; // <--- FIXED: Added missing import
 import { detectTreeLoss } from "../utils/detectLoss.js";
+import { model } from "../utils/model.js";
 
 const getSummary = async ({ reportData }) => {
   console.log("Generating summary...");
   console.log(reportData);
-  // <--- FIXED: Used stable model ID to prevent "404 Not Found"
-  const model = google("gemini-2.5-flash");
-
+ 
   const lossDetected = detectTreeLoss(reportData);
 
   const systemPrompt = `

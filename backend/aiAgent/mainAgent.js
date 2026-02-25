@@ -2,8 +2,7 @@ import { generateText } from "ai";
 import { google } from "@ai-sdk/google";
 import summaryAgentTool from "./summaryAgentTool.js";
 import emailAgentTool from "./emailAgentTool.js";
-
-const model = google("gemini-2.5-flash");
+import { model } from "../utils/model.js";
 
 // 1. ANALYST AGENT: Only responsible for analyzing data
 const analystSystemPrompt = `
