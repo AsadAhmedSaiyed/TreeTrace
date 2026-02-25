@@ -7,4 +7,4 @@ const openrouter = createOpenAI({
   apiKey: process.env.OPENAI_API_KEY, 
 });
 // This model has the best global availability for East Asia clusters
-export const model = openrouter("openrouter/free");
+export const model = openrouter("qwen/qwen-2.5-72b-instruct:free");
