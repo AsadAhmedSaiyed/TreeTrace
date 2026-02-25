@@ -12,7 +12,9 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@ai-sdk/azure": "^3.0.34",
     "@ai-sdk/google": "^3.0.13",
+    "@ai-sdk/groq": "^3.0.24",
     "@ai-sdk/openai": "^3.0.33",
     "@clerk/express": "^1.7.69",
     "@google/earthengine": "^1.6.14",

@@ -1,10 +1,6 @@
 // backend/utils/model.js
-import { createOpenAI } from "@ai-sdk/openai";
+import { groq } from '@ai-sdk/groq';
 
-// OpenRouter uses the OpenAI-compatible format
-const openrouter = createOpenAI({
-  baseURL: "https://openrouter.ai/api/v1",
-  apiKey: process.env.OPENAI_API_KEY, 
-});
-// This model has the best global availability for East Asia clusters
-export const model = openrouter("stepfun/step-3.5-flash:free");
+// This exports the Groq model for use throughout your app
+// It automatically looks for process.env.GROQ_API_KEY
+export const model = groq('llama-3.3-70b-versatile');
