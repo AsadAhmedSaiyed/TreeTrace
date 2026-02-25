@@ -36,11 +36,11 @@ spec:
             secretKeyRef:
               name: treetrace-backend-secret
               key: mongo-uri
-        - name: GOOGLE_GENERATIVE_AI_API_KEY
+        - name: OPENROUTER_AI_API_KEY
           valueFrom: 
             secretKeyRef:
               name: treetrace-backend-secret
-              key: google-generative-ai-api-key 
+              key: openrouter-api-key 
         - name: AI_GATEWAY_API_KEY
           valueFrom: 
             secretKeyRef:

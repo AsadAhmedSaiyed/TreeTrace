@@ -1,7 +1,7 @@
-import { google } from "@ai-sdk/google"; 
+
 import { generateObject } from "ai";
 import {z} from "zod";
-import { model } from "../utils/model";
+import { model } from "../utils/model.js";
 const generateEmailContent = async ({ summary, locationName }) => {
 
     console.log("Generating email content...");

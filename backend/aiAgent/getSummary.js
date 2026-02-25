@@ -1,4 +1,4 @@
-import { google } from "@ai-sdk/google";
+
 import { generateObject } from "ai";
 import { z } from "zod"; // <--- FIXED: Added missing import
 import { detectTreeLoss } from "../utils/detectLoss.js";
