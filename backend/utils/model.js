@@ -1,9 +1,6 @@
-// backend/utils/model.js
-import { groq } from '@ai-sdk/groq';
+import { ollama } from 'ai-sdk-ollama';
 
-export const model = groq('llama-3.3-70b-versatile', {
-  apiKey: process.env.GROQ_API_KEY,
-  headers: {
-    'User-Agent': 'Mozilla/5.0 (VercelAI-Agent)', // Helps bypass basic Cloudflare blocks
-  },
+export const model = ollama('llama3.2:3b', { // Match the 3B model you pulled
+  // Removed the space and kept it as a clean string
+  baseURL: 'http://57.158.82.64/api', 
 });
