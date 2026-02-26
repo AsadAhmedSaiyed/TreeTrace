@@ -1,8 +1,8 @@
 import { ollama } from 'ai-sdk-ollama';
 
-// Add the 'export' keyword directly to the const
 export const model = ollama('llama3.2:3b', { 
-  baseURL: 'http://ollama-service:80/api', 
+  // Direct Cluster-IP is the most reliable path inside K8s
+  baseURL: 'http://10.0.171.41:80/api', 
 });
 
-console.log("✅ Model initialized and exported as named export.");
+console.log("✅ Connection established to Cluster-IP: 10.0.171.41:80");
