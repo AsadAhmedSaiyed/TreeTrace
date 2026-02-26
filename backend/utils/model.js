@@ -1,6 +1,11 @@
-import { ollama } from 'ai-sdk-ollama';
+import { createOllama } from 'ollama-ai-provider'; // Recommended provider for AI SDK
 
-export const model = ollama('llama3.2:3b', { // Match the 3B model you pulled
-  // Removed the space and kept it as a clean string
-  baseURL: 'http://57.158.82.64/api', 
+const ollama = createOllama({
+  // Use the internal ClusterIP service name and port
+  baseURL: 'http://ollama-service:11434/api', 
 });
+
+// Define the specific model instance
+export const model = ollama('llama3.2:3b');
+
+console.log("Model initialized for: llama3.2:3b");
