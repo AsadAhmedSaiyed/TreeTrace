@@ -1,55 +1,50 @@
-
-import { generateObject } from "ai";
-import { z } from "zod"; // <--- FIXED: Added missing import
+import { generateText } from "ai";
 import { detectTreeLoss } from "../utils/detectLoss.js";
 import { model } from "../utils/model.js";
 
 const getSummary = async ({ reportData }) => {
   console.log("Generating summary...");
-  console.log(reportData);
- 
+  
   const lossDetected = detectTreeLoss(reportData);
 
-  const systemPrompt = `
-     You are a senior environmental analyst.
-
-Your task is to generate a MAANG-level executive summary for an environmental monitoring report.
-
-RULES:
-1. Use a professional, data-driven tone and simple words suitable for government bodies and NGOs.
-2. The summary must be a maximum of three (3) concise sentences.
-3. You MUST explicitly mention:
-   - Mean NDVI change (vegetation health)
-   - Mean NDMI change (moisture condition)
-   - Area affected in square meters (m²)
-4. Clearly reference the monitoring period using the provided dates.
-5. Comment briefly on the Z-score, clearly distinguishing between sudden anomalies and gradual long-term change.
-6. Do NOT make any judgment about alerting, severity thresholds, or loss classification.
-7. Do NOT include recommendations or calls to action.
-
-OUTPUT FORMAT:
-Return a single JSON object with exactly one field:
-{
-  "summary": string
-}
-    `;
-  const userPrompt = `Generate the summary and loss assessment for this data: ${JSON.stringify(reportData)}`;
-
-  const response = await generateObject({
-    model,
-    system: systemPrompt,
-    prompt: userPrompt,
-    schema: z.object({
-      summary: z.string(),
-    }),
-  });
-  
-  console.log("Loss detected : ",lossDetected);
-  
-  return {
-    summary: response.object.summary,
-    loss_detected: lossDetected,
+  // 1. PAYLOAD OPTIMIZATION: Stripping massive URLs and timestamps
+  const cleanData = {
+    ndvi_change: reportData.mean_ndvi_change,
+    ndmi_change: reportData.mean_ndmi_change,
+    area_m2: reportData.area_of_loss_m2,
+    z_score: reportData.mean_z_score
   };
+
+  // Inject the ground truth directly into the instructions
+  const systemPrompt = `
+You are a factual environmental data reporter.
+Ground Truth: ${lossDetected ? "CRITICAL LOSS DETECTED" : "NO SIGNIFICANT LOSS. NORMAL FLUCTUATIONS."}
+
+Write a strictly factual, 3-sentence summary using these metrics.
+If Ground Truth is NO LOSS or Area is 0, you MUST state that vegetation health is stable and changes are within normal baseline limits. Do not exaggerate small decimals. 
+Do not wrap in JSON.
+  `;
+
+  try {
+    // 2. USE GENERATETEXT: Much faster than generateObject for single strings
+    const response = await generateText({
+      model,
+      system: systemPrompt,
+      prompt: `Data: ${JSON.stringify(cleanData)}`,
+      abortSignal: AbortSignal.timeout(15000), // Enforce a strict 15-second limit
+    });
+    
+    return {
+      summary: response.text.trim(),
+      loss_detected: lossDetected,
+    };
+  } catch (error) {
+    console.error("Summary generation failed or timed out:", error.message);
+    return {
+      summary: "Automated summary unavailable due to high system load. Please review the raw metrics.",
+      loss_detected: lossDetected,
+    };
+  }
 };
 
 export default getSummary;

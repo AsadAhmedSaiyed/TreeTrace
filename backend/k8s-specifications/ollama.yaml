@@ -15,6 +15,13 @@ spec:
       containers:
       - name: ollama
         image: ollama/ollama:latest
+        resources:
+          requests:
+            cpu: "2"      # Guarantee 2 full CPU cores
+            memory: "4Gi" # Guarantee 4GB RAM
+          limits:
+            cpu: "4"      # Allow bursting up to 4 cores
+            memory: "8Gi"
         ports:
         - containerPort: 11434
         # This script starts the server, waits a moment, then pulls the model

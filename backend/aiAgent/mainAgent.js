@@ -22,88 +22,41 @@ console.log("Model : ",model);
 
 const runMainAgent = async (reportData, ngoEmail) => {
   console.log("🚀 Orchestrator started...");
- let analysisResponse;
-  // --- STEP 1: ANALYSIS PHASE ---
-  const sum = await getSummary({ reportData: reportData });
-  console.log("Summary", sum);
-  try{
-    console.log("Phase 1: Analyzing Report...");
-   analysisResponse = await generateText({
-    model,
-    system: analystSystemPrompt,
-    tools: { summaryAgent: summaryAgentTool },
-    toolChoice: "required",
-    maxSteps: 2, // It only needs 1 step to call the tool
-    maxRetries: 0,
-    abortSignal: AbortSignal.timeout(10000),
-    prompt: `Analyze this report: ${JSON.stringify(reportData)}`,
-  });
-  }catch (e) {
-    console.error("--- 🚨 THE FINAL ERROR LOG ---");
-    console.error("Message:", e.message);
-    console.error("Cause:", e.cause); // This will show the low-level reason
-    return {
-      result: "❌ Error",
-      generatedSummary: e.message
-    };
-  }
 
-  console.log("analysis response : ",analysisResponse);
+  // --- STEP 1: GET SUMMARY DIRECTLY (No tools needed) ---
+  const sum = await getSummary({ reportData });
+  console.log("✅ Summary:", sum);
 
-  // Extract the structured data from the tool result
-  let lossDetected = false;
-  let generatedSummary = "";
-  let result = "";
+  const lossDetected = sum.loss_detected;
+  const generatedSummary = sum.summary;
+  const result = lossDetected 
+    ? "ANALYSIS COMPLETE: Loss detected. Alerting NGO in background." 
+    : "ALL CLEAR: No loss detected.";
 
-  // Helper to find tool results safely
-  const summaryStep = analysisResponse.steps.find((step) =>
-    step.toolResults?.some((res) => res.toolName === "summaryAgent"),
-  );
-
-  if (summaryStep) {
-    const toolOutput = summaryStep.toolResults[0].output;
-    lossDetected = toolOutput.loss_detected;
-    generatedSummary = toolOutput.summary;
-    result = "ALL CLEAR: No loss detected.";
-  } else {
-    result = "❌ Error: Analysis failed to run.";
-  }
-
-  // --- STEP 2: LOGIC GATE (The "Deterministic" Part) ---
+  // --- STEP 2: LOGIC GATE ---
   if (!lossDetected) {
-    return {
-      result,
-      generatedSummary,
-    };
+    return { result, generatedSummary };
   }
 
   // --- STEP 3: ACTION PHASE ---
-  const sendEmailInBackground = async (generatedSummary, ngoEmail) => {
+  const sendEmailInBackground = async (summaryText, email) => {
     try {
       await generateText({
         model,
         system: commsSystemPrompt,
         tools: { emailAgent: emailAgentTool },
-        prompt: `Send alert to ${ngoEmail}. Context: ${generatedSummary}, Location name : ${reportData.locationName}`,
+        prompt: `Send alert to ${email}. Context: ${summaryText}, Location name : ${reportData.locationName}`,
       });
       console.log("✅ Background Alert Sent.");
     } catch (error) {
-      // Log the error to a service like Sentry or Datadog
       console.error("❌ Background Alert Failed:", error.message);
     }
   };
 
-  if (lossDetected) {
-    console.log("Handoff to background worker...");
+  console.log("Handoff to background worker...");
+  sendEmailInBackground(generatedSummary, ngoEmail);
 
-    // We call it without await, but the function HAS its own internal try/catch
-    sendEmailInBackground(generatedSummary, ngoEmail);
-
-    return {
-      result: "ANALYSIS COMPLETE: Loss detected. Alerting NGO in background.",
-      generatedSummary,
-    };
-  }
+  return { result, generatedSummary };
 };
 
 export default runMainAgent;
