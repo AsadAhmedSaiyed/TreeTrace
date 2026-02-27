@@ -18,9 +18,20 @@ Your ONLY job is to call the "emailAgent" to send an alert based on the summary 
 Use the summary to write a persuasive body text.
 `;
 
+console.log("Model : ",model);
+
 const runMainAgent = async (reportData, ngoEmail) => {
   console.log("🚀 Orchestrator started...");
-  
+  try {
+    console.log("Testing simple prompt (no tools)...");
+    const test = await generateText({
+      model,
+      prompt: "Say 'The AI is alive'",
+    });
+    console.log("🤖 Response:", test.text);
+  } catch (e) {
+    console.error("❌ Even simple call failed:", e.message);
+  }
   // --- STEP 1: ANALYSIS PHASE ---
   console.log("Phase 1: Analyzing Report...");
   const analysisResponse = await generateText({
