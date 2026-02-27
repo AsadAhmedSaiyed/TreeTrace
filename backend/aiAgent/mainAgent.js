@@ -3,7 +3,7 @@ import { google } from "@ai-sdk/google";
 import summaryAgentTool from "./summaryAgentTool.js";
 import emailAgentTool from "./emailAgentTool.js";
 import { model } from "../utils/model.js";
-
+import getSummary from "./getSummary.js";
 // 1. ANALYST AGENT: Only responsible for analyzing data
 const analystSystemPrompt = `
 You are an expert Data Analyst for TreeTrace. 
@@ -24,15 +24,18 @@ const runMainAgent = async (reportData, ngoEmail) => {
   console.log("🚀 Orchestrator started...");
  let analysisResponse;
   // --- STEP 1: ANALYSIS PHASE ---
+  const sum = await getSummary({ reportData: reportData });
+  console.log("Summary", sum);
   try{
     console.log("Phase 1: Analyzing Report...");
    analysisResponse = await generateText({
     model,
     system: analystSystemPrompt,
     tools: { summaryAgent: summaryAgentTool },
+    toolChoice: "required",
     maxSteps: 2, // It only needs 1 step to call the tool
     maxRetries: 0,
-    abortSignal: AbortSignal.timeout(60000),
+    abortSignal: AbortSignal.timeout(10000),
     prompt: `Analyze this report: ${JSON.stringify(reportData)}`,
   });
   }catch (e) {
@@ -104,3 +107,22 @@ const runMainAgent = async (reportData, ngoEmail) => {
 };
 
 export default runMainAgent;
+const test =  async () => {
+  const res = await runMainAgent({
+      locationName: "anand",
+      beforeDate: "2026-02-01T00:00:00.000Z",
+      afterDate: "2026-02-19T00:00:00.000Z",
+      mean_ndvi_change: -0.009015430834519498,
+      mean_evi_change: -0.005449030044596847,
+      mean_ndmi_change: -0.006045934914712434,
+      mean_ndbi_change: 0.006045934914712434,
+      mean_nbr_change: -0.002779398823444175,
+      mean_z_score: 0.44257918538374935,
+      historical_baseline_mu: 0.20332117060590058,
+      historical_variability_sigma: 0.0243506400535911,
+      area_of_loss_m2: 0,
+    });
+  console.log("test : ",res);  
+}
+
+test();
