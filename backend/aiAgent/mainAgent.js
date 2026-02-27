@@ -22,17 +22,7 @@ console.log("Model : ",model);
 
 const runMainAgent = async (reportData, ngoEmail) => {
   console.log("🚀 Orchestrator started...");
-  let analysisResponse; // DECLARED OUTSIDE
-  try {
-    console.log("Testing simple prompt (no tools)...");
-    const test = await generateText({
-      model,
-      prompt: "Say 'The AI is alive'",
-    });
-    console.log("🤖 Response:", test.text);
-  } catch (e) {
-    console.error("❌ Even simple call failed:", e.message);
-  }
+ 
   // --- STEP 1: ANALYSIS PHASE ---
   try{
     console.log("Phase 1: Analyzing Report...");
