@@ -1,8 +1,11 @@
-import { ollama } from 'ai-sdk-ollama';
+import { createOllama } from 'ai-sdk-ollama';
 
-export const model = ollama('llama3.2:3b', { 
-  // Direct Cluster-IP is the most reliable path inside K8s
-  baseURL: 'http://10.0.171.41:80/api', 
+// 1. Create a custom provider pointing to your Kubernetes service
+const customOllama = createOllama({
+  baseURL: 'http://ollama-service:80/api', 
 });
 
-console.log("✅ Connection established to Cluster-IP: 10.0.171.41:80");
+// 2. Initialize the execution model
+export const model = customOllama('llama3.2:3b');
+
+console.log("✅ ai-sdk-ollama provider initialized at http://ollama-service:80/api");
