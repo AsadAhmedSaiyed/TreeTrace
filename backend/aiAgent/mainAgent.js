@@ -22,6 +22,7 @@ console.log("Model : ",model);
 
 const runMainAgent = async (reportData, ngoEmail) => {
   console.log("🚀 Orchestrator started...");
+  let analysisResponse; // DECLARED OUTSIDE
   try {
     console.log("Testing simple prompt (no tools)...");
     const test = await generateText({
@@ -33,14 +34,24 @@ const runMainAgent = async (reportData, ngoEmail) => {
     console.error("❌ Even simple call failed:", e.message);
   }
   // --- STEP 1: ANALYSIS PHASE ---
-  console.log("Phase 1: Analyzing Report...");
-  const analysisResponse = await generateText({
+  try{
+    console.log("Phase 1: Analyzing Report...");
+   analysisResponse = await generateText({
     model,
     system: analystSystemPrompt,
     tools: { summaryAgent: summaryAgentTool },
     maxSteps: 2, // It only needs 1 step to call the tool
     prompt: `Analyze this report: ${JSON.stringify(reportData)}`,
   });
+  }catch (e) {
+    console.error("--- 🚨 THE FINAL ERROR LOG ---");
+    console.error("Message:", e.message);
+    console.error("Cause:", e.cause); // This will show the low-level reason
+    return {
+      result: "❌ Error",
+      generatedSummary: e.message
+    };
+  }
 
   console.log("analysis response : ",analysisResponse);
 
