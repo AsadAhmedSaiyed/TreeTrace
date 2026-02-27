@@ -22,11 +22,11 @@ console.log("Model : ",model);
 
 const runMainAgent = async (reportData, ngoEmail) => {
   console.log("🚀 Orchestrator started...");
-
+let start = Date.now();
   // --- STEP 1: GET SUMMARY DIRECTLY (No tools needed) ---
   const sum = await getSummary({ reportData });
   console.log("✅ Summary:", sum);
-
+console.log(Date.now()-start);
   const lossDetected = sum.loss_detected;
   const generatedSummary = sum.summary;
   const result = lossDetected 
