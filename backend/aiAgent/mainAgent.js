@@ -22,7 +22,7 @@ console.log("Model : ",model);
 
 const runMainAgent = async (reportData, ngoEmail) => {
   console.log("🚀 Orchestrator started...");
- 
+ let analysisResponse;
   // --- STEP 1: ANALYSIS PHASE ---
   try{
     console.log("Phase 1: Analyzing Report...");
@@ -31,6 +31,8 @@ const runMainAgent = async (reportData, ngoEmail) => {
     system: analystSystemPrompt,
     tools: { summaryAgent: summaryAgentTool },
     maxSteps: 2, // It only needs 1 step to call the tool
+    maxRetries: 0,
+    abortSignal: AbortSignal.timeout(60000),
     prompt: `Analyze this report: ${JSON.stringify(reportData)}`,
   });
   }catch (e) {
