@@ -1,7 +1,6 @@
-import { createOllama } from 'ai-sdk-ollama';
-import { AzureOpenAI } from "openai";
+
 import { createAzure } from '@ai-sdk/azure';
-console.log(process.env.AZURE_OPENAI_API_KEY);
+console.log("API : ",process.env.AZURE_OPENAI_API_KEY);
 // 1. Initialize the Azure provider using your resource name
 const azureProvider = createAzure({
   resourceName: 'treetracellm', 
@@ -12,4 +11,3 @@ const azureProvider = createAzure({
 // This fully replaces the Ollama model while keeping the same 'model' variable export
 export const model = azureProvider('gpt-4o-2');
 
-console.log("Model : ");
