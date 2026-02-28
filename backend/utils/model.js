@@ -6,4 +6,4 @@ const customOllama = createOllama({
 });
 
 // 2. Initialize the execution model
-export const model = customOllama('llama3.2');
+export const model = customOllama('qwen2.5:1.5b');
