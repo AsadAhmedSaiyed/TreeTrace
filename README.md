@@ -5,7 +5,7 @@
 [![Monitoring](https://img.shields.io/badge/monitoring-Prometheus%20%26%20Grafana-orange.svg)](#)
 [![Uptime](https://img.shields.io/badge/uptime-99.9%25-brightgreen.svg)](#)
 
-**TreeTrace** is a mission-critical platform designed to combat deforestation using the power of satellite intelligence and AI. We provide a 24/7 surveillance system that transforms raw space data into actionable community alerts with a **99.9% availability guarantee**. 🌍✨
+**TreeTrace** is a mission-critical platform designed to combat deforestation using the power of satellite intelligence and AI. We provide an interactive monitoring platform that transforms raw space data into actionable community alerts with a **99.9% availability guarantee**. 🌍✨
 
 ### 🌐 Live Links
 - **Main Frontend**: [https://treetrace.tech](https://treetrace.tech)
@@ -24,7 +24,7 @@
 
 ## ✅ The TreeTrace Solution 🛡️
 
-- **🛰️ Automated Space Monitoring**: We use **Google Earth Engine (GEE)** to run real-time canopy health checks across vast forest regions.
+- **🛰️ On-Demand Space Monitoring**: Users can leverage **Google Earth Engine (GEE)** to run real-time canopy health checks across vast forest regions.
 - **🧠 Intelligent Insights**: Native integration with **Azure OpenAI (GPT-4o)** turns massive satellite datasets into simple, natural language reports.
 - **📍 Community-NGO Bridge**: A geo-intelligent routing system that connects ground-truth reports directly to the nearest response team.
 - **🏗️ Enterprise Reliability**: A cloud-native architecture deployed on **AKS** ensuring **99.9% uptime** for constant environmental protection.
@@ -33,11 +33,11 @@
 
 ## 🔄 User Flow
 
-1.  **Surveillance**: Google Earth Engine continuously monitors satellite imagery for canopy changes.
-2.  **Detection**: The backend processes spatial data to identify potential deforestation hotspots.
-3.  **Analysis**: Azure OpenAI (GPT-4o) analyzes detected anomalies and generates non-technical reports.
-4.  **Action**: Real-time alerts are dispatched via Resend to local NGOs and response teams.
-5.  **Visualization**: Users track canopy health and historical alerts through the interactive **Leaflet.js** map dashboard.
+1.  **Search**: User starts by inputting a city name to locate the area of interest.
+2.  **Date Selection**: User selects "Before" and "After" dates to compare canopy changes over time.
+3.  **Area Definition**: User selects the specific monitoring area directly on the interactive **Leaflet.js** map.
+4.  **Analysis**: The backend fetches **GEE** data and **Azure OpenAI (GPT-4o)** generates a non-technical summary report.
+5.  **Alerting**: If forest loss is detected, an automated email is sent to the nearest NGO via the **Resend API**.
 
 ---
 
