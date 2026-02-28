@@ -31,6 +31,16 @@
 
 ---
 
+## 🔄 User Flow
+
+1.  **Surveillance**: Google Earth Engine continuously monitors satellite imagery for canopy changes.
+2.  **Detection**: The backend processes spatial data to identify potential deforestation hotspots.
+3.  **Analysis**: Azure OpenAI (GPT-4o) analyzes detected anomalies and generates non-technical reports.
+4.  **Action**: Real-time alerts are dispatched via Resend to local NGOs and response teams.
+5.  **Visualization**: Users track canopy health and historical alerts through the interactive **Leaflet.js** map dashboard.
+
+---
+
 ## 🏗️ System Architecture & Flow
 
 ```mermaid
