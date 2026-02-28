@@ -1,7 +1,7 @@
 import { createOllama } from 'ai-sdk-ollama';
 import { AzureOpenAI } from "openai";
 import { createAzure } from '@ai-sdk/azure';
-
+console.log(process.env.AZURE_OPENAI_API_KEY);
 // 1. Initialize the Azure provider using your resource name
 const azureProvider = createAzure({
   resourceName: 'treetracellm', 
