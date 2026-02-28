@@ -66,7 +66,7 @@ app.get("/reports/:id", requireAuth(), async (req, res) => {
         message: "Report Not found!",
       });
     }
-    console.log("Report : ",report);
+   
     return res.status(200).json({
       success: true,
       report,
@@ -88,12 +88,12 @@ app.get("/my-reports", requireAuth(), async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found in database" });
     }
-    console.log(user.role);
+   
     if (user.role === "STANDARD_USER") {
       const reports = await ReportModel.find({ userId: user._id }).sort({
         createdAt: -1,
       });
-      console.log(reports);
+  
       res.status(200).json({
         success: true,
         reports,
@@ -102,7 +102,7 @@ app.get("/my-reports", requireAuth(), async (req, res) => {
       const reports = await ReportModel.find({ ngoMgrId: user._id }).sort({
         createdAt: -1,
       });
-      console.log(reports);
+   
       res.status(200).json({
         success: true,
         reports,
@@ -117,7 +117,7 @@ app.patch("/reports/:id", requireAuth(), async (req, res) => {
   try {
     let { id } = req.params;
     const { updates } = req.body;
-    console.log("new fields : ",updates);
+   
     const report = await ReportModel.findByIdAndUpdate(id, updates, {
       new: true,
       runValidators: true,
@@ -127,7 +127,7 @@ app.patch("/reports/:id", requireAuth(), async (req, res) => {
         message: "Report Not found!",
       });
     }
-    console.log("Updated report : ",report);
+   
     return res.status(200).json({
       success: true,
       report,
@@ -146,9 +146,9 @@ app.post("/reports/:id/generate-summary", requireAuth(), async (req, res) => {
     console.log("Fetching summary");
     const { id } = req.params;
     const { reportData, email } = req.body;
-    console.log("Report Data : ", reportData);
+  
     const result = await runMainAgent(reportData, email);
-    console.log(result);
+    console.log("Result : ",result);
     console.log(Date.now() - start);
     return res.status(200).json({
       success: true,
@@ -205,9 +205,9 @@ app.post("/ngo/register",requireAuth(), async (req, res) => {
   try {
     const { name, email, center_point } = req.body;
     const { userId } = getAuth(req);
-    console.log("UserId : ",userId);
+  
     const user = await UserModel.findOne({ clerkId: userId });
-    console.log(user);
+   
     if (user.role !== "NGO_MANAGER") {
       return res
         .status(403)
@@ -240,7 +240,7 @@ app.post("/ngo/register",requireAuth(), async (req, res) => {
         coordinates: center_point.coordinates, // [Lng, Lat]
       },
     });
-    console.log("New : ",newNGO);
+ 
     res.status(201).json({
       success: true,
       message: "NGO registered successfully!",
@@ -271,10 +271,10 @@ app.get("/ngo-details", requireAuth(), async (req, res) => { // Added requireAut
         .status(403)
         .json({ success: false, message: "Access denied: Not an NGO Manager" });
     }
-   console.log("User : ",user.email);
+ 
     // 3. Find NGO (Handle case where NGO profile is missing)
     const ngo = await NGOModel.findOne({ email: user.email });
-      console.log("NGO :", ngo);
+     
     if (!ngo) {
       return res.status(404).json({ success: false, message: "NGO profile not found" });
     }
@@ -313,7 +313,7 @@ app.get("/ngo/nearest", async (req, res) => {
         },
       },
     });
-    console.log(nearestNGO);
+    
     if (!nearestNGO) {
       return res.status(404).json({ message: "No NGO found nearby." });
     }

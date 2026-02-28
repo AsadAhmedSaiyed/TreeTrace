@@ -6,6 +6,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendEmail = async ({email,subject,body}) => {
   console.log("Sending email...");
+  console.log(email);
   try{
     const { data, error } = await resend.emails.send({
     from: "TreeTrace <notifications@treetrace.tech>",
