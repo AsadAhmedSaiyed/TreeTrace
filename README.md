@@ -7,7 +7,12 @@
 
 **TreeTrace** is a mission-critical platform designed to combat deforestation using the power of satellite intelligence and AI. We provide a 24/7 surveillance system that transforms raw space data into actionable community alerts with a **99.9% availability guarantee**. 🌍✨
 
+### 🌐 Live Links
+- **Main Frontend**: [https://treetrace.tech](https://treetrace.tech)
+- **Backend API**: [https://api.treetrace.tech](https://api.treetrace.tech)
+
 ---
+
 
 ## 🎯 The Core Problem 🌋
 
@@ -45,6 +50,7 @@ graph LR
 
 ### **Product Stack**
 - **🎨 Frontend**: Developed with **React (Vite)** and **Tailwind CSS** for a responsive, high-performance user interface.
+- **🗺️ Geo-Spatial**: Integrated **Leaflet.js** for interactive map visualization and geo-intelligent monitoring.
 - **🟢 Backend**: A robust **Express.js** API layer designed for high throughput and low latency.
 - **🍃 Database**: **MongoDB** with Mongoose for resilient, document-oriented data management.
 - **🤖 Intelligence**: **Azure OpenAI SDK** for deep content analysis and **Google Earth Engine SDK** for spatial computing.
@@ -63,6 +69,31 @@ We use **GitHub Actions** for automated testing and deployment. Every push to `m
 1. **🏗️ Build**: Containerizes the backend application using Docker.
 2. **📦 Publish**: Pushes the image to **Docker Hub** with the `:latest` tag.
 3. **🌐 Deploy**: Securely connects to **Azure** and triggers a `rollout restart` on the **AKS** cluster to apply changes without downtime.
+
+---
+
+## 📊 Performance & Load Testing
+
+To verify system stability, the API was stress-tested by sending 100 parallel requests simultaneously. You can reproduce this test using the following PowerShell script:
+
+```powershell
+$url = "https://api.treetrace.tech/"
+1..100 | ForEach-Object {
+     Start-Job -ScriptBlock {
+         curl.exe -s -o $null -w "%{http_code}\n" "https://api.treetrace.tech/"
+     }
+}
+Get-Job | Wait-Job | Receive-Job
+```
+
+Real-time Grafana monitoring captured these exact metrics during the traffic spike:
+
+- **Zero Downtime**: The backend successfully processed all requests with exactly 0 process restarts.
+- **Non-Blocking Execution**: The maximum Node.js Event Loop Lag peaked at just **8.90 ms**, ensuring the main thread remained highly responsive.
+- **Memory Efficiency**: Process memory stayed stable between **140 MiB and 160 MiB**, proving effective garbage collection with zero memory leaks.
+- **Low CPU Cost**: The server consumed **less than 2% CPU** at peak load, showing highly optimized resource usage.
+
+![Grafana Performance Metrics](docs/images/grafana_metrics.png)
 
 ---
 
