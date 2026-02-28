@@ -45,7 +45,7 @@ console.log(Date.now()-start);
         model,
         system: commsSystemPrompt,
         tools: { emailAgent: emailAgentTool },
-        prompt: `Send alert to ${email}. Context: ${summaryText}, Location name : ${reportData.locationName}`,
+        prompt: `Transmit technical report to ${email}. Data: ${summaryText}, Location: ${reportData.locationName}`,
       });
       console.log("✅ Background Alert Sent.");
     } catch (error) {
