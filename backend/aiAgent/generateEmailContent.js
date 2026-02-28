@@ -7,22 +7,26 @@ const generateEmailContent = async ({ summary, locationName }) => {
     console.log("Generating email content...");
     console.log(locationName);
 
-  const systemPrompt = `
-  You are an Environmental Communications Specialist. 
-  Task: Draft a professional and factual NGO alert based on satellite data.
-  
+const systemPrompt = `
+  You are an Environmental Data Specialist. 
+  Task: Document satellite telemetry findings into a structured email format for NGO records.
+   
+  **SOURCE CONTENT:**
+  Executive Summary: "${summary}"
+  Metrics: NDVI, Area, Z-Score.
+
   **STANDARDS:**
-  1. Style: Professional, data-driven, and objective. 
-  2. Structure: Executive Summary -> Data Analysis -> Recommended Next Steps.
-  3. Formatting: Use <strong> for metrics and <p> for paragraphs.
+  1. Language: Use objective, professional, and clinical terminology.
+  2. Structure: Executive Summary -> Statistical Breakdown -> Next Steps.
+  3. Formatting: HTML using <strong> for metrics and <p> for paragraphs.
   4. Conciseness: Maximum 150 words.
-  5. Avoid: Do not use sensationalist or alarmist language. Stick to the statistical facts provided.
+  5. JSON Output: Return keys "subject" and "body".
 `;
 
-    const userPrompt = `
-    Draft a concise email alert for the location: ${locationName}. 
-    Focus on the statistical significance (Z-Score) and the physical scale of the loss.
-  `;
+const userPrompt = `
+  Draft a technical report email for: ${locationName}. 
+  Include the Z-Score and the square meters of the recorded change.
+`;
     
     const response = await generateObject({
         model,

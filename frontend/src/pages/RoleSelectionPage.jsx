@@ -67,7 +67,7 @@ export default function RoleSelectionPage() {
               <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center text-2xl">🌱</div>
               <div>
                 <h3 className="font-bold text-slate-800 text-lg">Individual User</h3>
-                <p className="text-slate-500 text-sm">Plant trees and track your impact</p>
+                <p className="text-slate-500 text-sm">Analyse your local area to detect tree loss and track your report</p>
               </div>
             </div>
           </div>
@@ -85,7 +85,7 @@ export default function RoleSelectionPage() {
               <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center text-2xl">🏢</div>
               <div>
                 <h3 className="font-bold text-slate-800 text-lg">NGO Manager</h3>
-                <p className="text-slate-500 text-sm">Verify plantations and manage campaigns</p>
+                <p className="text-slate-500 text-sm">Verify tree loss reports and track them</p>
               </div>
             </div>
           </div>
