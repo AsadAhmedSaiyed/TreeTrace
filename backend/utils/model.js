@@ -1,9 +1,15 @@
 import { createOllama } from 'ai-sdk-ollama';
+import { AzureOpenAI } from "openai";
+import { createAzure } from '@ai-sdk/azure';
 
-// 1. Create a custom provider pointing to your Kubernetes service
-const customOllama = createOllama({
-  baseURL: 'http://57.158.82.64:80', 
+// 1. Initialize the Azure provider using your resource name
+const azureProvider = createAzure({
+  resourceName: 'treetracellm', 
+  apiKey: process.env.AZURE_OPENAI_API_KEY, 
 });
 
-// 2. Initialize the execution model
-export const model = customOllama('qwen2.5:1.5b');
+// 2. Export the execution model using your deployment name
+// This fully replaces the Ollama model while keeping the same 'model' variable export
+export const model = azureProvider('gpt-4o-2');
+
+console.log("Model : ");
