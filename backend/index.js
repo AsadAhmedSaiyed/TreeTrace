@@ -13,7 +13,7 @@ import {
   getAuth,
 } from "@clerk/express";
 import UserModel from "./models/UserModel.js";
-import runMainAgent from "./aiAgent/mainAgent.js";
+import runMainAgent from "./aiServices/mainAgent.js";
 import cors from "cors";
 import NGOModel from "./models/NGOModel.js";
 const url = process.env.MONGO_URI;

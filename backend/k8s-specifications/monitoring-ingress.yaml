@@ -1,0 +1,34 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: treetrace-backend-ingress
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # Added this to handle the subpath routing correctly
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: nginx # This fixes the <none> class issue
+  tls:
+  - hosts:
+    - api.treetrace.tech
+    secretName: treetrace-api-tls
+  rules:
+  - host: api.treetrace.tech
+    http:
+      paths:
+      - path: /grafana
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: my-grafana
+            port:
+              number: 80
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: treetrace-backend-service
+            port:
+              number: 80
