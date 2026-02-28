@@ -1,4 +1,4 @@
-# 🌳 TreeTrace: Space-Based Forest Intelligence
+# 🌳 TreeTrace: Satellite-Driven Forest Monitoring
 
 [![Production Ready](https://img.shields.io/badge/status-production--ready-success.svg)](#)
 [![Kubernetes](https://img.shields.io/badge/deployed-AKS-blue.svg)](#)
@@ -110,3 +110,4 @@ kubectl get pods
   <b>Built for Global Impact by Asad Ahmed Saiyed</b> <br>
   <i>Leading the way in 99.9% Reliable Environmental Monitoring</i> 🌳✨
 </p>
+
