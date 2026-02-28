@@ -1,68 +1,112 @@
-# 🌳 TreeTrace: Satellite-Driven Forest Monitoring
+# 🌳 TreeTrace: Space-Based Forest Intelligence
 
 [![Production Ready](https://img.shields.io/badge/status-production--ready-success.svg)](#)
 [![Kubernetes](https://img.shields.io/badge/deployed-AKS-blue.svg)](#)
 [![Monitoring](https://img.shields.io/badge/monitoring-Prometheus%20%26%20Grafana-orange.svg)](#)
 [![Uptime](https://img.shields.io/badge/uptime-99.9%25-brightgreen.svg)](#)
 
-**TreeTrace** is an intelligent platform that protects forests using satellite data and AI. We provide real-time monitoring and actionable insights with **99.9% uptime**. 🌍✨
+**TreeTrace** is a mission-critical platform designed to combat deforestation using the power of satellite intelligence and AI. We provide a 24/7 surveillance system that transforms raw space data into actionable community alerts with a **99.9% availability guarantee**. 🌍✨
 
 ---
 
-## 🎯 The Problem 🌋
+## 🎯 The Core Problem 🌋
 
-- **🕵️ Hidden Loss**: Deforestation often happens in remote areas, away from the public eye.
-- **📊 Complex Data**: Satellite data is too technical for most NGOs and communities to use.
-- **⏳ Slow Response**: Manual monitoring is too slow to stop illegal logging in real-time.
-
-## ✅ The Solution 🛡️
-
-- **🛰️ Satellite Surveillance**: Automatic forest health tracking via **Google Earth Engine (GEE)**.
-- **🧠 AI Analysis**: Turning complex space-data into simple, readable reports using **Azure OpenAI**.
-- **📍 Smart Alerts**: Automatically connecting environmental threats to the nearest registered NGOs.
-- **🏗️ Industrial Grade**: Built on **AKS** for high availability and **99.9% system reliability**.
+- **🕵️ Invisible Deforestation**: Illegal logging often happens in remote, unmonitored areas where it goes unnoticed for months.
+- **📊 Technical Barrier**: Satellite data is incredibly powerful but too complex for most local communities and NGOs to interpret.
+- **⏳ The Response Lag**: Traditional monitoring follows a "detect-and-report" cycle that is too slow to stop environmental damage in real-time.
 
 ---
 
-## 🛠️ Technology Stack 💻
+## ✅ The TreeTrace Solution 🛡️
 
-- **Frontend**: React (Vite), Tailwind CSS, Framer Motion.
-- **Backend**: Node.js, Express, MongoDB.
-- **Intelligence**: Azure OpenAI, Google Earth Engine.
-- **Infrastructure**: Docker, Kubernetes (AKS), Prometheus, Grafana.
-
----
-
-## ☁️ DevOps & Monitoring ⚡
-
-We ensure **zero downtime** and **99.9% reliability** through a modern cloud-native stack:
-
-- **☸️ Kubernetes (AKS)**: Automated scaling and self-healing orchestration on Azure.
-- **🐳 Docker**: Consistent containerized environments for stable deployments.
-- **📊 Observability**: Real-time metrics via **Prometheus** and visual health tracking with **Grafana**. �
-- **🚀 Zero Downtime**: Seamless updates without service interruptions.
+- **🛰️ Automated Space Monitoring**: We use **Google Earth Engine (GEE)** to run real-time canopy health checks across vast forest regions.
+- **🧠 Intelligent Insights**: Native integration with **Azure OpenAI (GPT-4o)** turns massive satellite datasets into simple, natural language reports.
+- **📍 Community-NGO Bridge**: A geo-intelligent routing system that connects ground-truth reports directly to the nearest response team.
+- **🏗️ Enterprise Reliability**: A cloud-native architecture deployed on **AKS** ensuring **99.9% uptime** for constant environmental protection.
 
 ---
 
-## 🚀 Quick Start
+## 🏗️ System Architecture & Flow
 
-```bash
-# 1. Clone & Install
-git clone https://github.com/AsadAhmedSaiyed/TreeTrace.git
-cd backend && npm install
-cd ../frontend && npm install
-
-# 2. Configure
-# Add Clerk, MongoDB, GEE, and Azure keys to .env files.
-
-# 3. Launch
-npm start          # Backend
-npm run dev        # Frontend (in another terminal)
+```mermaid
+graph LR
+    User([Community User]) -->|Uploads Report| Frontend[React + Vite]
+    Satellite[GEE Satellite Data] -->|Canopy Analysis| Backend
+    Frontend -->|API Request| Backend[Express.js / Node.js]
+    Backend -->|Process| AI[Azure OpenAI Agent]
+    AI -->|Generate Summary| Backend
+    Backend -->|Alert| NGO[Nearest NGO via Resend]
+    Backend -.->|Metrics| Prometheus[Prometheus + Grafana]
 ```
 
 ---
 
+## 🛠️ Tech Stack & Operational Excellence 💻
+
+### **Product Stack**
+- **🎨 Frontend**: Developed with **React (Vite)** and **Tailwind CSS** for a responsive, high-performance user interface.
+- **🟢 Backend**: A robust **Express.js** API layer designed for high throughput and low latency.
+- **🍃 Database**: **MongoDB** with Mongoose for resilient, document-oriented data management.
+- **🤖 Intelligence**: **Azure OpenAI SDK** for deep content analysis and **Google Earth Engine SDK** for spatial computing.
+
+### **Infrastructure & Reliability (99.9% Uptime)**
+- **☸️ Orchestration**: **Azure Kubernetes Service (AKS)** manages our containers, providing self-healing and automated scaling.
+- **🐳 Containerization**: Standardized **Docker** images ensure consistency across development, staging, and production.
+- **📊 Observability**: A professional monitoring suite using **Prometheus** to scrape real-time metrics and **Grafana** for visual system health tracking.
+- **🔄 Zero-Downtime**: CI/CD ready with rolling updates to ensure our environmental monitoring never pauses.
+
+---
+
+## 🚀 CI/CD Pipeline 🛠️
+
+We use **GitHub Actions** for automated testing and deployment. Every push to `main` triggers:
+1. **🏗️ Build**: Containerizes the backend application using Docker.
+2. **📦 Publish**: Pushes the image to **Docker Hub** with the `:latest` tag.
+3. **🌐 Deploy**: Securely connects to **Azure** and triggers a `rollout restart` on the **AKS** cluster to apply changes without downtime.
+
+---
+
+## 📦 Kubernetes Deployment Guide
+
+To deploy the production-ready infrastructure on AKS, use the following commands:
+
+```bash
+# 1. Apply Secrets (Ensure treetrace-backend-secret.yaml is configured)
+kubectl apply -f backend/k8s-specifications/treetrace-backend-secret.yaml
+
+# 2. Deploy the core Backend and Service
+kubectl apply -f backend/k8s-specifications/treetrace-backend.yaml
+
+# 3. Setup Ingress (HTTPS & Routing)
+kubectl apply -f backend/k8s-specifications/treetrace-backend-ingress.yaml
+
+# 4. (Optional) Setup Monitoring Ingress
+kubectl apply -f backend/k8s-specifications/monitoring-ingress.yaml
+
+# 5. Verify the deployment
+kubectl get pods
+```
+
+---
+
+## 💻 Local Development Setup
+
+1. **Clone & Install**:
+   ```bash
+   git clone https://github.com/AsadAhmedSaiyed/TreeTrace.git
+   cd backend && npm install
+   cd ../frontend && npm install
+   ```
+2. **Configure**: Fill in your `.env` files with API keys (Clerk, MongoDB, GEE, Azure).
+3. **Launch**:
+   ```bash
+   npm start          # Backend server
+   npm run dev        # Frontend (in another terminal)
+   ```
+
+---
+
 <p align="center">
-  <b>Built for a Greener Future by Asad Ahmed Saiyed</b> <br>
-  <i>99.9% Uptime for Global Forest Protection</i> 🌳✨
+  <b>Built for Global Impact by Asad Ahmed Saiyed</b> <br>
+  <i>Leading the way in 99.9% Reliable Environmental Monitoring</i> 🌳✨
 </p>
