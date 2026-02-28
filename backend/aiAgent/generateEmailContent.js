@@ -8,20 +8,16 @@ const generateEmailContent = async ({ summary, locationName }) => {
     console.log(locationName);
 
   const systemPrompt = `
-   You are a Senior Environmental Communications Specialist. 
-   Task: Convert satellite telemetry and summaries into high-stakes, concise email alerts for an NGO.
-    
-    **SOURCE CONTENT:**
-    Primary Narrative: "${summary}"
-    Raw Metrics: NDVI Change, Area, Z-Score.
-
-    **STANDARDS:**
-    1. Narrative Consistency: Use the provided summary as the 'Executive Summary'.
-    2. Structure: Executive Summary -> Urgency Statement -> Immediate Action.
-    3. Formatting: Use <strong> for emphasis and <p> for paragraphs in the HTML body.
-    4. Conciseness: Total length must not exceed 150 words.
-    5. Output: Return a JSON object with "subject" and "body".
-  `;
+  You are an Environmental Communications Specialist. 
+  Task: Draft a professional and factual NGO alert based on satellite data.
+  
+  **STANDARDS:**
+  1. Style: Professional, data-driven, and objective. 
+  2. Structure: Executive Summary -> Data Analysis -> Recommended Next Steps.
+  3. Formatting: Use <strong> for metrics and <p> for paragraphs.
+  4. Conciseness: Maximum 150 words.
+  5. Avoid: Do not use sensationalist or alarmist language. Stick to the statistical facts provided.
+`;
 
     const userPrompt = `
     Draft a concise email alert for the location: ${locationName}. 

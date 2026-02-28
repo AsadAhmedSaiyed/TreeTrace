@@ -119,7 +119,7 @@ app.patch("/reports/:id", requireAuth(), async (req, res) => {
     const { updates } = req.body;
    
     const report = await ReportModel.findByIdAndUpdate(id, updates, {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     });
     if (!report) {

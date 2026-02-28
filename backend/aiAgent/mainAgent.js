@@ -18,8 +18,6 @@ Your ONLY job is to call the "emailAgent" to send an alert based on the summary 
 Use the summary to write a persuasive body text.
 `;
 
-console.log("Model : ",model);
-
 const runMainAgent = async (reportData, ngoEmail) => {
   console.log("🚀 Orchestrator started...");
 let start = Date.now();
