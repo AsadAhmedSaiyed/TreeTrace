@@ -8,25 +8,6 @@
 
 ---
 
-## 📂 Project Structure
-
-```text
-TreeTrace/
-├── backend/                # API and Data Processing
-│   ├── aiServices/        # AI logic (Azure OpenAI)
-│   ├── controllers/       # Route handlers
-│   ├── models/            # Database schemas
-│   ├── k8s-specifications/ # Kubernetes (AKS) configs
-│   └── utils/             # Helper functions
-├── frontend/               # User Interface (React + Vite)
-│   ├── src/
-│   │   ├── components/    # Reusable UI parts
-│   │   ├── pages/         # Main screens
-│   │   └── services/      # API calls
-└── README.md              # Main documentation
-```
-
----
 
 ## 🎯 The Problem
 
