@@ -17,6 +17,7 @@
 ## 🎯 The Core Problem 🌋
 
 - **🕵️ Invisible Deforestation**: Illegal logging often happens in remote, unmonitored areas where it goes unnoticed for months.
+- **📉 Lack of Historical Tracking**: No easy way for stakeholders to track cumulative **tree loss** and environmental degradation over specific timeframes.
 - **📊 Technical Barrier**: Satellite data is incredibly powerful but too complex for most local communities and NGOs to interpret.
 - **⏳ The Response Lag**: Traditional monitoring follows a "detect-and-report" cycle that is too slow to stop environmental damage in real-time.
 
@@ -25,6 +26,7 @@
 ## ✅ The TreeTrace Solution 🛡️
 
 - **🛰️ On-Demand Space Monitoring**: Users can leverage **Google Earth Engine (GEE)** to run real-time canopy health checks across vast forest regions.
+- **📉 Tree Loss Reporting**: Automated generation of detailed **tree loss reports** that track environmental impact between any two selected dates.
 - **🧠 Intelligent Insights**: Native integration with **Azure OpenAI (GPT-4o)** turns massive satellite datasets into simple, natural language reports.
 - **📍 Community-NGO Bridge**: A geo-intelligent routing system that connects ground-truth reports directly to the nearest response team.
 - **🏗️ Enterprise Reliability**: A cloud-native architecture deployed on **AKS** ensuring **99.9% uptime** for constant environmental protection.
@@ -34,9 +36,9 @@
 ## 🔄 User Flow
 
 1.  **Search**: User starts by inputting a city name to locate the area of interest.
-2.  **Date Selection**: User selects "Before" and "After" dates to compare canopy changes over time.
+2.  **Date Selection**: User selects "Before" and "After" dates to compare canopy changes and track **tree loss**.
 3.  **Area Definition**: User selects the specific monitoring area directly on the interactive **Leaflet.js** map.
-4.  **Analysis**: The backend fetches **GEE** data and **Azure OpenAI (GPT-4o)** generates a non-technical summary report.
+4.  **Analysis**: The backend fetches **GEE** data to generate a detailed **tree loss report**, while **Azure OpenAI (GPT-4o)** provides a non-technical summary.
 5.  **Alerting**: If forest loss is detected, an automated email is sent to the nearest NGO via the **Resend API**.
 
 ---
