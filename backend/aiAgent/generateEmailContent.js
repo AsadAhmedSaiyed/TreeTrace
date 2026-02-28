@@ -1,13 +1,11 @@
-
 import { generateObject } from "ai";
-import {z} from "zod";
+import { z } from "zod";
 import { model } from "../utils/model.js";
 const generateEmailContent = async ({ summary, locationName }) => {
+  console.log("Generating email content...");
+  console.log(locationName);
 
-    console.log("Generating email content...");
-    console.log(locationName);
-
-const systemPrompt = `
+  const systemPrompt = `
   You are an Environmental Data Specialist. 
   Task: Document satellite telemetry findings into a structured email format for NGO records.
    
@@ -23,23 +21,24 @@ const systemPrompt = `
   5. JSON Output: Return keys "subject" and "body".
 `;
 
-const userPrompt = `
+  const userPrompt = `
   Draft a technical report email for: ${locationName}. 
   Include the Z-Score and the square meters of the recorded change.
 `;
-    
-    const response = await generateObject({
-        model,
-        system :systemPrompt,
-        prompt:userPrompt,
-       
-        schema: z.object({
-              subject: z.string().describe("Urgent, data-heavy subject line including location name"),
-              body: z.string().describe("HTML body, max 150 words, bulleted stats"),
-            }),
-    });
-    console.log("email content generated", response.object);
-    return response.object;
+
+  const response = await generateObject({
+    model,
+    system: systemPrompt,
+    prompt: userPrompt,
+
+    // Change this in your schema definition
+    schema: z.object({
+      subject: z.string().describe("Standard technical report subject line"), // Removed 'Urgent'
+      body: z.string().describe("Technical body text, max 150 words"),
+    }),
+  });
+  console.log("email content generated", response.object);
+  return response.object;
 };
 
 export default generateEmailContent;

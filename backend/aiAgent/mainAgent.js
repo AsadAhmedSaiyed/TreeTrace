@@ -1,9 +1,7 @@
-import { generateText } from "ai";
-import { google } from "@ai-sdk/google";
-import summaryAgentTool from "./summaryAgentTool.js";
-import emailAgentTool from "./emailAgentTool.js";
-import { model } from "../utils/model.js";
+
 import getSummary from "./getSummary.js";
+import generateEmailContent from "./generateEmailContent.js";
+import sendEmail from "./sendEmail.js";
 // 1. ANALYST AGENT: Only responsible for analyzing data
 const analystSystemPrompt = `
 You are an expert Data Analyst for TreeTrace. 
@@ -39,19 +37,30 @@ console.log(Date.now()-start);
   }
 
   // --- STEP 3: ACTION PHASE ---
-  const sendEmailInBackground = async (summaryText, email) => {
-    try {
-      await generateText({
-        model,
-        system: commsSystemPrompt,
-        tools: { emailAgent: emailAgentTool },
-        prompt: `Transmit technical report to ${email}. Data: ${summaryText}, Location: ${reportData.locationName}`,
-      });
-      console.log("✅ Background Alert Sent.");
-    } catch (error) {
-      console.error("❌ Background Alert Failed:", error.message);
-    }
-  };
+  // --- STEP 3: ACTION PHASE ---
+const sendEmailInBackground = async (summaryText, email) => {
+  try {
+    console.log("Directly generating email content...");
+    
+    // 1. Call your function directly instead of using generateText + tools
+    const emailContent = await generateEmailContent({
+      summary: summaryText,
+      locationName: reportData.locationName
+    });
+
+    // 2. Call your email sender directly
+    await sendEmail({
+      email: email,
+      subject: emailContent.subject,
+      body: emailContent.body
+    });
+
+    console.log("✅ Email sent successfully without agent intervention.");
+  } catch (error) {
+    // If it still fails here, the filter is hitting inside generateEmailContent
+    console.error("❌ Email generation failed:", error.message);
+  }
+};
 
   console.log("Handoff to background worker...");
   sendEmailInBackground(generatedSummary, ngoEmail);
@@ -60,23 +69,3 @@ console.log(Date.now()-start);
 };
 
 export default runMainAgent;
-
-const test = async ()=>{
-  const res = await runMainAgent({
-      locationName: "anand",
-      beforeDate: "2026-02-01T00:00:00.000Z",
-      afterDate: "2026-02-19T00:00:00.000Z",
-      mean_ndvi_change: -0.009015430834519498,
-      mean_evi_change: -0.005449030044596847,
-      mean_ndmi_change: -0.006045934914712434,
-      mean_ndbi_change: 0.006045934914712434,
-      mean_nbr_change: -0.002779398823444175,
-      mean_z_score: 0.44257918538374935,
-      historical_baseline_mu: 0.20332117060590058,
-      historical_variability_sigma: 0.0243506400535911,
-      area_of_loss_m2: 0,
-    });
-  console.log("Result : ",res);  
-};
-
-test();
