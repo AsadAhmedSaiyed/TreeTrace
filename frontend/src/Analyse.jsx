@@ -184,7 +184,7 @@ function Analyse() {
                 name="city"
                 onChange={handleInput}
                 value={data.city}
-                placeholder="Surat"
+                placeholder="Ahmedabad"
               />
             </div>
 
