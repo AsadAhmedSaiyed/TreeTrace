@@ -15,6 +15,7 @@ import {
 import UserModel from "./models/UserModel.js";
 import runMainAgent from "./aiServices/mainAgent.js";
 import cors from "cors";
+import runOrchestrator from "./orchestrator.js";
 import NGOModel from "./models/NGOModel.js";
 const url = process.env.MONGO_URI;
 const app = express();

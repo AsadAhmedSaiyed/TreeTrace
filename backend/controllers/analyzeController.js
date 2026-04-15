@@ -7,7 +7,7 @@ import { getAuth } from '@clerk/express'
 dotenv.config();
 
 // --- Core Index Calculation Functions ---
-
+  
 // 1. Enhanced Vegetation Index (EVI) - Best for Greenness
 const calcEVI = (img) => {
   // EVI is robust because it uses the Blue band (B2) to correct for haze/atmosphere.
@@ -360,7 +360,7 @@ export const analyze = async (req, res) => {
     ]);
 
     console.log("getting response from GEE");
-
+    const a = Date.now();
     const uploadPromise = Promise.all([
       saveToCloudinary(beforeUrl, "tree-trace/before"),
       saveToCloudinary(afterUrl, "tree-trace/after"),
@@ -373,6 +373,7 @@ export const analyze = async (req, res) => {
         ndvi_diff_image: permDiff,
       });
       console.log("Images saved!");
+      console.log(Date.now()-a);
     });
 
     const centerLat = (bounds._southWest.lat + bounds._northEast.lat) / 2;
