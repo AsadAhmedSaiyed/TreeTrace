@@ -28,20 +28,5 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/treetrace-backend:latest
 
-      # 3. Login to Azure
-      - name: Azure Login
-        uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      # 4. Connect to AKS
-      - name: Set AKS Context
-        uses: azure/aks-set-context@v4
-        with:
-          resource-group: 'TreeTrace'
-          cluster-name: 'TreeTraceCluster'
-
-      # 5. The "Magic" Step: Force Pods to Restart
-      - name: Rollout Restart
-        run: |
-          kubectl rollout restart deployment/treetrace-backend
+      - name: Trigger Render Deploy
+        run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
