@@ -6,11 +6,9 @@ import ReportModel from "../models/ReportModel.js";
 import { getAuth } from '@clerk/express'
 dotenv.config();
 
-// --- Core Index Calculation Functions ---
-  
-// 1. Enhanced Vegetation Index (EVI) - Best for Greenness
+
 const calcEVI = (img) => {
-  // EVI is robust because it uses the Blue band (B2) to correct for haze/atmosphere.
+  
   // Formula: 2.5 * ((NIR - Red) / (NIR + 6 * Red - 7.5 * Blue + 1))
   const EVI = img.expression(
     "2.5 * ((B8 - B4) / (B8 + 6 * B4 - 7.5 * B2 + 1))",
@@ -24,18 +22,17 @@ const calcEVI = (img) => {
   return EVI.rename("EVI");
 };
 
-// 2. Normalized Difference Moisture Index (NDMI) - Water/Biomass
+
 const calcNDMI = (img) => {
-  // Uses Shortwave Infrared (SWIR1) to detect water content in plant tissue.
+
   // Formula: (NIR - SWIR1) / (NIR + SWIR1)
   console.log("Finding NDMI");
   return img.normalizedDifference(["B8", "B11"]).rename("NDMI");
 };
 
-// 3. Normalized Difference Built-up Index (NDBI) - Bare Ground/Built-up
 const calcNDBI = (img) => {
   console.log("Finding NDBI");
-  // Uses the inverse of NDMI to highlight non-vegetated surfaces.
+
   // Formula: (SWIR1 - NIR) / (SWIR1 + NIR)
   return img.normalizedDifference(["B11", "B8"]).rename("NDBI");
 };
@@ -43,16 +40,11 @@ const calcNDBI = (img) => {
 // 4. Normalized Burn Ratio (NBR) - Fire/Structural Change
 const calcNBR = (img) => {
   console.log("Finding NBR");
-  // Highly sensitive to moisture loss and ash/charcoal content after a burn.
+
   // Formula: (NIR - SWIR2) / (NIR + SWIR2)
   return img.normalizedDifference(["B8A", "B12"]).rename("NBR");
 };
 
-// --- END Core Index Calculation Functions ---
-
-// --- 1. Robust Async Helpers ---
-
-// Promisify GEE evaluation (Standard MAANG pattern for non-blocking ops)
 const evaluate = (eeObject) => {
   return new Promise((resolve, reject) => {
     eeObject.evaluate((data, error) => {
@@ -88,24 +80,11 @@ const getRegionStats = (image, geometry, reducer, scale) => {
   });
 };
 
-// --- 2. Improved Cloud Masking ---
-// --- 2. Improved Cloud Masking (Using SCL Band) ---
+
+
 function maskS2clouds(image) {
   const scl = image.select("SCL");
 
-  // SCL Classes Table:
-  // 0: No Data, 1: Saturated / Defective
-  // 2: Dark Area Pixels
-  // 3: Cloud Shadows
-  // 4: Vegetation, 5: Not Vegetated, 6: Water, 7: Unclassified
-  // 8: Cloud Medium Probability, 9: Cloud High Probability
-  // 10: Thin Cirrus, 11: Snow
-
-  // We want to KEEP: 4 (Veg), 5 (Bare Soil), 6 (Water), 7 (Unclassified), 2 (Dark/Terrain), 11 (Snow)
-  // We want to REMOVE: 1, 3 (Shadows), 8 (Clouds), 9 (Clouds), 10 (Cirrus)
-
-  // Select classes to MASK (Keep only clear land/water)
-  // Masking 3 (Shadows), 8, 9, 10 (Clouds)
   const mask = scl.neq(3).and(scl.neq(8)).and(scl.neq(9)).and(scl.neq(10));
 
   return image
@@ -117,18 +96,16 @@ function maskS2clouds(image) {
 
 // Function to calculate Historical Mean (mu) and Standard Deviation (sigma) for EVI
 const getHistoricalStats = async (geometry, dates) => {
-  // 1. Define the historical time window
+  
   const beforeDate = ee.Date(dates.before);
 
-  // --- FIX START: Use evaluate() instead of getInfo() ---
-  // We fetch the year and month asynchronously to prevent server timeouts
   const [endYear, startMonthNum] = await Promise.all([
     evaluate(beforeDate.get("year")),
     evaluate(beforeDate.get("month"))
   ]);
-  // --- FIX END ---
+  
 
-  const startYear = endYear - 2; // Start 2 years prior
+  const startYear = endYear - 2;
 
   // 2. Filter the historical satellite collection (Sentinel-2)
   const historicalCollection = ee
@@ -226,16 +203,6 @@ export const analyze = async (req, res) => {
         .filter(ee.Filter.lt("CLOUDY_PIXEL_PERCENTAGE", 100)) // Relaxed cloud filter
         .map(maskS2clouds);
 
-      // ASYNC CHECK: Does this collection have images?
-      // const count = await evaluate(collection.size());
-
-      // if (count === 0) {
-      //   throw new Error(
-      //     `No clear satellite images found for '${label}' date (${dateStr}) in this region. Try a different date range.`,
-      //   );
-      // }
-
-      // If safe, return the composite
       return collection.median().clip(geometry);
     };
 
