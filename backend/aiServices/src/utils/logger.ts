@@ -16,6 +16,10 @@ const LOG_LEVELS : Record<LogLevel, number> = {
     error:3
 };
 
+const CURRENT_LEVEL: number =
+  LOG_LEVELS[(process.env.LOG_LEVEL as LogLevel) ?? "info"];
+
+
 const format = (level : LogLevel, context : string, message : string, meta : LogMeta = {}) : string =>{
    const entry = {
     timestamp : new Date().toISOString(),

@@ -26,7 +26,7 @@ export interface NodeOutput {
   emailSubject?: string;
   emailBody?: string;
   dispatchStatus?: DispatchStatus;
-  error?: PipelineError[];
+  errors?: PipelineError[];
 }
 
 export interface DispatchStatus {
