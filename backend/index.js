@@ -12,6 +12,7 @@ import {
   requireAuth,
   getAuth,
 } from "@clerk/express";
+import {runPipeline} from "./aiServices/src/pipeline.js";
 import UserModel from "./models/UserModel.js";
 import runMainAgent from "./aiServices/mainAgent.js";
 import cors from "cors";
@@ -148,9 +149,10 @@ app.post("/reports/:id/generate-summary", requireAuth(), async (req, res) => {
     const { id } = req.params;
     const { reportData, email } = req.body;
   
-    const result = await runMainAgent(reportData, email);
+    const result = await runPipeline(reportData, ngoEmail, {
+      runId: requestId,  // Ties API request ID to LangSmith trace
+    });
     console.log("Result : ",result);
-    console.log(Date.now() - start);
     return res.status(200).json({
       success: true,
       result,
