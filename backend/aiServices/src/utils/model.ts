@@ -1,5 +1,7 @@
 import {ChatGoogle} from "@langchain/google";
-
+import dotenv from "dotenv";
+dotenv.config();
+console.log(process.env.GOOGLE_API_KEY);
 export const model = new ChatGoogle({
     model : "gemini-2.5-flash",
     temperature: 0.2,
