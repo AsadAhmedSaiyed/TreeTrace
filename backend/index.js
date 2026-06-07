@@ -149,7 +149,7 @@ app.post("/reports/:id/generate-summary", requireAuth(), async (req, res) => {
     const { id } = req.params;
     const { reportData, email } = req.body;
   
-    const result = await runPipeline(reportData, ngoEmail, {
+    const result = await runPipeline(reportData, email, {
       runId: requestId,  // Ties API request ID to LangSmith trace
     });
     console.log("Result : ",result);
