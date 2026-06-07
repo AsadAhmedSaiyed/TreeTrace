@@ -125,6 +125,7 @@ const ReportPage = () => {
           },
         },
       );
+      console.log("response : ", response);
       if (
         response.data.result.result ===
         "ANALYSIS COMPLETE: Loss detected. Alerting NGO in background."
