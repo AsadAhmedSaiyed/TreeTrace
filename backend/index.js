@@ -2,6 +2,7 @@
 //docker push  asad313/treetrace-backend
 import express from "express";
 import dotenv from "dotenv";
+import { v4 as uuidv4 } from "uuid";
 import mongoose from "mongoose";
 import client from "prom-client"
 import { analyze } from "./controllers/analyzeController.js";
@@ -148,7 +149,7 @@ app.post("/reports/:id/generate-summary", requireAuth(), async (req, res) => {
     console.log("Fetching summary");
     const { id } = req.params;
     const { reportData, email } = req.body;
-  
+    const requestId = uuidv4()
     const result = await runPipeline(reportData, email, {
       runId: requestId,  // Ties API request ID to LangSmith trace
     });
