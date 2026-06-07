@@ -50,14 +50,14 @@ Ground Truth Classification:
 {groundTruth}
 
 Satellite Vegetation Metrics:
-- Mean NDVI Change: {mean_ndvi_change}
-- Mean EVI Change: {mean_evi_change}
-- Mean NDMI Change: {mean_ndmi_change}
-- Mean NDBI Change: {mean_ndbi_change}
-- Mean NBR Change: {mean_nbr_change}
+- Mean NDVI Change: {ndvi_change}
+- Mean EVI Change: {evi_change}
+- Mean NDMI Change: {ndmi_change}
+- Mean NDBI Change: {ndbi_change}
+- Mean NBR Change: {nbr_change}
 
 Statistical Indicators:
-- Mean Z-Score: {mean_z_score}
+- Mean Z-Score: {z_score}
 - Historical Baseline Mean (μ): {historical_baseline_mu}
 - Historical Variability Sigma (σ): {historical_variability_sigma}
 
