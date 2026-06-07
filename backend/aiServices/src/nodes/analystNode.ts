@@ -93,6 +93,7 @@ export const analystNode = async (
       evi_change: reportData.mean_evi_change ?? 0,
       ndbi_change: reportData.mean_ndbi_change ?? 0,
       nbr_change: reportData.mean_nbr_change ?? 0,
+      area_of_loss_m2 : reportData.area_of_loss_m2 ?? 0,
       historical_baseline_mu: reportData.historical_baseline_mu ?? 0,
       historical_variability_sigma:
         reportData.historical_variability_sigma ?? 0,
