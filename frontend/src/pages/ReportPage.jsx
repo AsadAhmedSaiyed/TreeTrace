@@ -126,25 +126,22 @@ const ReportPage = () => {
         },
       );
       console.log("response : ", response);
-      if (
-        response.data.result.result ===
-        "ANALYSIS COMPLETE: Loss detected. Alerting NGO in background."
-      ) {
+      if (response.data.result.lossDetected) {
         console.log("updating");
         console.log(ngo.userId);
         setReportData((prev) => ({
           ...prev,
           alertSent: true,
           ngoMgrId : ngo.userId,
-          result: response.data.result.result,
-          summary: response.data.result.generatedSummary,
+          result: response.data.result.lossDetected,
+          summary: response.data.result.summary,
         }));
         const res = await axios.patch(
           `${import.meta.env.VITE_BACKEND_URL}/reports/${id}`,
           {
             updates: {
-              result: response.data.result.result,
-              summary: response.data.result.generatedSummary,
+              result: response.data.result.lossDetected,
+              summary: response.data.result.summary,
               alertSent: true,
               ngoMgrId: ngo.userId,
             },
@@ -159,16 +156,16 @@ const ReportPage = () => {
       } else {
         setReportData((prev) => ({
           ...prev,
-          result: response.data.result.result,
-          summary: response.data.result.generatedSummary,
+          result: response.data.result.lossDetected,
+          summary: response.data.result.summary,
         }));
 
         const res = await axios.patch(
           `${import.meta.env.VITE_BACKEND_URL}/reports/${id}`,
           {
             updates: {
-              result: response.data.result.result,
-              summary: response.data.result.generatedSummary,
+              result: response.data.result.lossDetected,
+              summary: response.data.result.summary,
             },
           },
           {
