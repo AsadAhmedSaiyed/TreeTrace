@@ -1,8 +1,6 @@
 import { graph } from "./graph.js";
 import { createLogger } from "./utils/logger.js";
 import type { ReportData, PipelineResult, PipelineOptions, DispatchStatus } from "./types.js";
-import { create } from "node:domain";
-import { report } from "node:process";
 
 const logger = createLogger("Pipeline");
 
